@@ -7,10 +7,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Burndown Chart</title>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <style>
+        .event-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .event-table th, .event-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        .event-table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .highlight {
+            background-color: #ffeb3b !important;
+        }
+    </style>
 </head>
 
 <body>
     <div id="chart"></div>
+    <table class="event-table" id="event-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Event</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr data-date="2024-06-07">
+                <td>7.6.2024</td>
+                <td>Demo with Fabian and Pascal</td>
+                <td>Complained about security problems and timeline concerns.</td>
+            </tr>
+            <tr data-date="2024-06-07">
+                <td>7.6.2024</td>
+                <td>Found Critical Security Bug</td>
+                <td>Identified the "session sharing bug".</td>
+            </tr>
+            <tr data-date="2024-06-09">
+                <td>9.6.2024 - 13.6.2024</td>
+                <td>Work with Sushrut and Santosh</td>
+                <td>Fixed 2 major security bugs.</td>
+            </tr>
+            <tr data-date="2024-06-14">
+                <td>14.6.2024</td>
+                <td>Internal Demo & Testing Workshop</td>
+                <td>Added 6 new tasks after security testing and workshop.</td>
+            </tr>
+            <tr data-date="2024-06-09">
+                <td>9.6.2024 - 14.6.2024</td>
+                <td>Observation: Insufficient Burndown Speed</td>
+                <td>Testing in the team is underdeveloped. Increased manual testing duration and quality issues, leading to rework. Plan to add a test automation person to the team.</td>
+            </tr>
+        </tbody>
+    </table>
     <script>
         google.charts.load('current', { "packages": ["corechart"] });
         google.charts.setOnLoadCallback(drawChart);
@@ -153,6 +209,9 @@
                 series: {
                     0: { color: 'orange', labelInLegend: "What's next tasks remaining" },
                     1: { color: 'blue', labelInLegend: "Total tasks remaining" }
+                },
+                tooltip: {
+                    isHtml: true
                 }
             };
 
@@ -171,6 +230,16 @@
 
             chart.draw(data, options);
         }
+
+        // Add hover effect on table rows
+        document.querySelectorAll('.event-table tbody tr').forEach(row => {
+            row.addEventListener('mouseover', () => {
+                row.classList.add('highlight');
+            });
+            row.addEventListener('mouseout', () => {
+                row.classList.remove('highlight');
+            });
+        });
     </script>
 </body>
 
