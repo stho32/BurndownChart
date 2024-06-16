@@ -10,33 +10,46 @@
 </head>
 
 <body>
-    <div id="chart" style="width: 900px; height:500px"></div>
+    <div id="chart"></div>
     <script>
         google.charts.load('current', { "packages": ["corechart"] });
         google.charts.setOnLoadCallback(drawChart);
 
         function drawChart() {
+            // Configuration data
+            const numTasks = 40;
+            const startDate = new Date(2024, 5, 3);
+            const endDate = new Date(2024, 6, 25);
+            const chartHeight = numTasks * 10; // 10px per task
+            const numDays = (endDate - startDate) / (1000 * 60 * 60 * 24) + 1;
+            const chartWidth = numDays * 10; // 10px per day
+
+            // Setting the chart size
+            document.getElementById('chart').style.width = `${chartWidth}px`;
+            document.getElementById('chart').style.height = `${chartHeight}px`;
+
+            // Data for the chart
             var data = google.visualization.arrayToDataTable([
-                ["Date", "Remaining Tasks (What's next)", { type: "string", role: "annotation" }],
-                [new Date(2024, 5, 3), 23, "start"],
-                [new Date(2024, 5, 4), 15, null],
-                [new Date(2024, 5, 5), 20, null],
-                [new Date(2024, 5, 6), 17, null],
-                [new Date(2024, 5, 7), 18, null],
-                [new Date(2024, 5, 8), 18, null],
-                [new Date(2024, 5, 9), 18, null],
-                [new Date(2024, 5, 10), 18, null],
-                [new Date(2024, 5, 11), 21, null],
-                [new Date(2024, 5, 12), 18, null],
-                [new Date(2024, 5, 13), 16, null],
-                [new Date(2024, 5, 14), 15, null],
-                [new Date(2024, 5, 15), 15, null],
-                [new Date(2024, 5, 16), 15, null],
-                [new Date(2024, 5, 17), NaN, null],
-                [new Date(2024, 5, 18), NaN, null],
-                [new Date(2024, 5, 19), NaN, null],
-                [new Date(2024, 5, 20), NaN, null],
-                [new Date(2024, 5, 21), NaN, "deadline"],
+                ["Date", "What's next tasks remaining", "Total Tasks Remaining", { type: "string", role: "annotation" }],
+                [new Date(2024, 5, 3), 23, null, "start"],
+                [new Date(2024, 5, 4), 15, null, null],
+                [new Date(2024, 5, 5), 20, null, null],
+                [new Date(2024, 5, 6), 17, null, null],
+                [new Date(2024, 5, 7), 18, 36, null],
+                [new Date(2024, 5, 8), 18, 36, null],
+                [new Date(2024, 5, 9), 18, 36, null],
+                [new Date(2024, 5, 10), 18, 36, null],
+                [new Date(2024, 5, 11), 21, 39, null],
+                [new Date(2024, 5, 12), 18, 35, null],
+                [new Date(2024, 5, 13), 16, 33, null],
+                [new Date(2024, 5, 14), 15, 37, null],
+                [new Date(2024, 5, 15), 15, 37, null],
+                [new Date(2024, 5, 16), 15, 37, null],
+                [new Date(2024, 5, 17), null, null, null],
+                [new Date(2024, 5, 18), null, null, null],
+                [new Date(2024, 5, 19), null, null, null],
+                [new Date(2024, 5, 20), null, null, null],
+                [new Date(2024, 5, 21), null, null, "deadline"],
             ]);
 
             var options = {
@@ -45,14 +58,27 @@
                     title: 'Date',
                     format: 'MMM dd',
                     viewWindow: {
-                        max: new Date(2024, 6, 25)
+                        min: startDate,
+                        max: endDate
+                    },
+                    gridlines: {
+                        color: 'transparent', // Hide the default gridlines
+                    },
+                    minorGridlines: {
+                        count: 1 // This will draw gridlines for each day
                     }
                 },
                 vAxis: {
                     title: 'Tasks',
                     viewWindow: {
                         min: 0,
-                        max: 40
+                        max: numTasks
+                    },
+                    gridlines: {
+                        count: numTasks + 1 // This will draw a gridline for each task
+                    },
+                    minorGridlines: {
+                        count: 0
                     }
                 },
                 legend: 'none',
@@ -61,16 +87,78 @@
                     0: {
                         type: 'linear',
                         color: 'green',
-                        lineWidth: 10,
+                        lineWidth: 2,
+                        opacity: 0.3,
+                        showR2: true,
+                        visibleInLegend: true
+                    },
+                    1: {
+                        type: 'linear',
+                        color: 'blue',
+                        lineWidth: 2,
                         opacity: 0.3,
                         showR2: true,
                         visibleInLegend: true
                     }
+                },
+                series: {
+                    0: { color: 'orange' },
+                    1: { color: 'blue' }
                 }
             };
 
             var chartDiv = document.getElementById('chart');
             var chart = new google.visualization.LineChart(chartDiv);
+
+            // Draw the chart with annotations
+            google.visualization.events.addListener(chart, 'ready', function () {
+                var cli = chart.getChartLayoutInterface();
+                var chartArea = cli.getChartAreaBoundingBox();
+                var svg = chart.getContainer().getElementsByTagName('svg')[0];
+
+                // Add vertical gridlines for each Monday
+                var firstMonday = new Date(startDate);
+                while (firstMonday.getDay() !== 1) {
+                    firstMonday.setDate(firstMonday.getDate() + 1);
+                }
+
+                var currentMonday = new Date(firstMonday);
+                while (currentMonday <= endDate) {
+                    var x = cli.getXLocation(currentMonday);
+                    var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', x);
+                    line.setAttribute('x2', x);
+                    line.setAttribute('y1', chartArea.top);
+                    line.setAttribute('y2', chartArea.top + chartArea.height);
+                    line.setAttribute('stroke', '#cccccc');
+                    line.setAttribute('stroke-width', 1);
+                    svg.appendChild(line);
+
+                    currentMonday.setDate(currentMonday.getDate() + 7); // Move to the next Monday
+                }
+
+                // Draw a red vertical bar for the deadline
+                var deadline = new Date(2024, 6, 16);
+                var x = cli.getXLocation(deadline);
+
+                var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x);
+                line.setAttribute('x2', x);
+                line.setAttribute('y1', chartArea.top);
+                line.setAttribute('y2', chartArea.top + chartArea.height);
+                line.setAttribute('stroke', 'red');
+                line.setAttribute('stroke-width', 2);
+                svg.appendChild(line);
+
+                // Add label for the deadline
+                var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', x + 5);
+                text.setAttribute('y', chartArea.top + 20);
+                text.setAttribute('fill', 'red');
+                text.textContent = "Jens's presentation of the software";
+                svg.appendChild(text);
+            });
+
             chart.draw(data, options);
         }
     </script>
