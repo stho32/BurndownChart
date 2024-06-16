@@ -23,7 +23,7 @@
         const endDate = new Date(2024, 6, 25);
         const chartHeight = numTasks * pixelsPerTask;
         const numDays = (endDate - startDate) / (1000 * 60 * 60 * 24) + 1;
-        const chartWidth = numDays * pixelsPerDay; 
+        const chartWidth = numDays * pixelsPerDay;
 
         // Setting the chart size
         document.getElementById('chart').style.width = `${chartWidth}px`;
@@ -107,10 +107,10 @@
                         max: endDate
                     },
                     gridlines: {
-                        color: 'transparent', 
+                        color: 'transparent',
                     },
                     minorGridlines: {
-                        count: 1 
+                        count: 1
                     }
                 },
                 vAxis: {
@@ -120,13 +120,15 @@
                         max: numTasks
                     },
                     gridlines: {
-                        count: numTasks + 1 
+                        count: numTasks + 1
                     },
                     minorGridlines: {
                         count: 0
                     }
                 },
-                legend: 'none',
+                legend: {
+                    position: 'top'
+                },
                 interpolateNulls: true,
                 trendlines: {
                     0: {
@@ -135,7 +137,8 @@
                         lineWidth: 2,
                         opacity: 0.3,
                         showR2: true,
-                        visibleInLegend: true
+                        visibleInLegend: true,
+                        labelInLegend: 'Trendline: What\'s next tasks'
                     },
                     1: {
                         type: 'linear',
@@ -143,12 +146,13 @@
                         lineWidth: 2,
                         opacity: 0.3,
                         showR2: true,
-                        visibleInLegend: true
+                        visibleInLegend: true,
+                        labelInLegend: 'Trendline: Total tasks'
                     }
                 },
                 series: {
-                    0: { color: 'orange' },
-                    1: { color: 'blue' }
+                    0: { color: 'orange', labelInLegend: "What's next tasks remaining" },
+                    1: { color: 'blue', labelInLegend: "Total tasks remaining" }
                 }
             };
 
