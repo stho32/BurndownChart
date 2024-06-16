@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -7,15 +8,16 @@
     <title>Burndown Chart</title>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 </head>
+
 <body>
     <div id="chart" style="width: 900px; height:500px"></div>
     <script>
-        google.charts.load('current', {"packages" : ["corechart"]});
+        google.charts.load('current', { "packages": ["corechart"] });
         google.charts.setOnLoadCallback(drawChart);
 
         function drawChart() {
             var data = google.visualization.arrayToDataTable([
-                ["Date", "Remaining Tasks (What's next)", {type: "string", role: "annotation"}],
+                ["Date", "Remaining Tasks (What's next)", { type: "string", role: "annotation" }],
                 [new Date(2024, 5, 3), 23, "start"],
                 [new Date(2024, 5, 4), 15, null],
                 [new Date(2024, 5, 5), 20, null],
@@ -36,14 +38,14 @@
                 [new Date(2024, 5, 20), NaN, null],
                 [new Date(2024, 5, 21), NaN, "deadline"],
             ]);
-            
+
             var options = {
                 title: 'Project Burndown Chart',
                 hAxis: {
-                    title: 'Date', 
+                    title: 'Date',
                     format: 'MMM dd',
                     viewWindow: {
-                        max: new Date(2024, 6, 16)
+                        max: new Date(2024, 6, 25)
                     }
                 },
                 vAxis: {
@@ -54,13 +56,24 @@
                     }
                 },
                 legend: 'none',
-                interpolateNulls: true
+                interpolateNulls: true,
+                trendlines: {
+                    0: {
+                        type: 'linear',
+                        color: 'green',
+                        lineWidth: 10,
+                        opacity: 0.3,
+                        showR2: true,
+                        visibleInLegend: true
+                    }
+                }
             };
-            
+
             var chartDiv = document.getElementById('chart');
             var chart = new google.visualization.LineChart(chartDiv);
             chart.draw(data, options);
         }
     </script>
 </body>
+
 </html>
