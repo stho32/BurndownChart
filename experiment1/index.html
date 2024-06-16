@@ -15,13 +15,15 @@
         google.charts.load('current', { "packages": ["corechart"] });
         google.charts.setOnLoadCallback(drawChart);
 
+        const pixelsPerTask = 10;
+        const pixelsPerDay = 20;
         // Configuration data
         const numTasks = 40;
         const startDate = new Date(2024, 5, 3);
         const endDate = new Date(2024, 6, 25);
-        const chartHeight = numTasks * 10; // 10px per task
+        const chartHeight = numTasks * pixelsPerTask;
         const numDays = (endDate - startDate) / (1000 * 60 * 60 * 24) + 1;
-        const chartWidth = numDays * 10; // 10px per day
+        const chartWidth = numDays * pixelsPerDay; 
 
         // Setting the chart size
         document.getElementById('chart').style.width = `${chartWidth}px`;
@@ -105,10 +107,10 @@
                         max: endDate
                     },
                     gridlines: {
-                        color: 'transparent', // Hide the default gridlines
+                        color: 'transparent', 
                     },
                     minorGridlines: {
-                        count: 1 // This will draw gridlines for each day
+                        count: 1 
                     }
                 },
                 vAxis: {
@@ -118,7 +120,7 @@
                         max: numTasks
                     },
                     gridlines: {
-                        count: numTasks + 1 // This will draw a gridline for each task
+                        count: numTasks + 1 
                     },
                     minorGridlines: {
                         count: 0
@@ -159,11 +161,8 @@
                 var chartArea = cli.getChartAreaBoundingBox();
                 var svg = chart.getContainer().getElementsByTagName('svg')[0];
 
-                // Add vertical gridlines for each Monday
                 addWeekMarkers(svg, cli, chartArea, startDate, endDate);
-
-                // Add a red vertical bar for the deadline
-                addVerticalBar(svg, cli, chartArea, new Date(2024, 6, 16), "Jens's presentation of the software", 'red');
+                addVerticalBar(svg, cli, chartArea, new Date(2024, 6, 16), "Jens's presentation", 'red');
             });
 
             chart.draw(data, options);
