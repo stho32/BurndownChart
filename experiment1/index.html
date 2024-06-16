@@ -19,12 +19,12 @@
             padding: 8px;
         }
 
-        .event-table tr:hover {
-            background-color: #f1f1f1;
+        .event-table tr:hover, .highlight {
+            background-color: #ffeb3b !important;
         }
 
-        .highlight {
-            background-color: #ffeb3b !important;
+        .marker {
+            cursor: pointer;
         }
     </style>
 </head>
@@ -34,33 +34,39 @@
     <table class="event-table" id="event-table">
         <thead>
             <tr>
+                <th>#</th>
                 <th>Date</th>
                 <th>Event</th>
                 <th>Details</th>
             </tr>
         </thead>
         <tbody>
-            <tr data-date="2024-06-07">
+            <tr data-date="2024-06-07" data-event="1">
+                <td>1</td>
                 <td>7.6.2024</td>
                 <td>Demo with Fabian and Pascal</td>
                 <td>Complained about security problems and timeline concerns.</td>
             </tr>
-            <tr data-date="2024-06-07">
+            <tr data-date="2024-06-07" data-event="2">
+                <td>2</td>
                 <td>7.6.2024</td>
                 <td>Found Critical Security Bug</td>
                 <td>Identified the "session sharing bug".</td>
             </tr>
-            <tr data-date="2024-06-09">
+            <tr data-date="2024-06-09" data-event="3">
+                <td>3</td>
                 <td>9.6.2024 - 13.6.2024</td>
                 <td>Work with Sushrut and Santosh</td>
                 <td>Fixed 2 major security bugs.</td>
             </tr>
-            <tr data-date="2024-06-14">
+            <tr data-date="2024-06-14" data-event="4">
+                <td>4</td>
                 <td>14.6.2024</td>
                 <td>Internal Demo & Testing Workshop</td>
                 <td>Added 6 new tasks after security testing and workshop.</td>
             </tr>
-            <tr data-date="2024-06-09">
+            <tr data-date="2024-06-09" data-event="5">
+                <td>5</td>
                 <td>9.6.2024 - 14.6.2024</td>
                 <td>Observation: Insufficient Burndown Speed</td>
                 <td>Testing in the team is underdeveloped. Increased manual testing duration and quality issues, leading to rework. Plan to add a test automation person to the team.</td>
@@ -85,24 +91,31 @@
         document.getElementById('chart').style.width = `${chartWidth}px`;
         document.getElementById('chart').style.height = `${chartHeight}px`;
 
-        // Function to add a vertical bar with text
-        function addVerticalBar(svg, cli, chartArea, date, text, color) {
+        // Function to add a dot with a tooltip for events
+        function addEventDot(svg, cli, chartArea, date, eventNumber, tooltip) {
             var x = cli.getXLocation(date);
+            var y = chartArea.top - 10;
+
+            // Draw the dot
+            var dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            dot.setAttribute('cx', x);
+            dot.setAttribute('cy', y);
+            dot.setAttribute('r', 5);
+            dot.setAttribute('fill', 'purple');
+            dot.setAttribute('class', 'marker');
+            dot.setAttribute('data-event', eventNumber);
+            dot.setAttribute('title', tooltip);
+            svg.appendChild(dot);
+
+            // Draw a line from the dot to the top of the chart area
             var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('x1', x);
             line.setAttribute('x2', x);
-            line.setAttribute('y1', chartArea.top);
-            line.setAttribute('y2', chartArea.top + chartArea.height);
-            line.setAttribute('stroke', color);
-            line.setAttribute('stroke-width', 2);
+            line.setAttribute('y1', y);
+            line.setAttribute('y2', chartArea.top);
+            line.setAttribute('stroke', 'purple');
+            line.setAttribute('stroke-width', 1);
             svg.appendChild(line);
-
-            var label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            label.setAttribute('x', x + 5);
-            label.setAttribute('y', chartArea.top + 20);
-            label.setAttribute('fill', color);
-            label.textContent = text;
-            svg.appendChild(label);
         }
 
         // Function to add vertical gridlines for each Monday
@@ -225,7 +238,14 @@
                 var svg = chart.getContainer().getElementsByTagName('svg')[0];
 
                 addWeekMarkers(svg, cli, chartArea, startDate, endDate);
-                addVerticalBar(svg, cli, chartArea, new Date(2024, 6, 16), "Jens's presentation", 'red');
+                addEventDot(svg, cli, chartArea, new Date(2024, 6, 16), 0, "Jens's presentation");
+
+                // Add dots for events
+                addEventDot(svg, cli, chartArea, new Date(2024, 5, 7), 1, "Demo with Fabian and Pascal: Complained about security problems and timeline concerns.");
+                addEventDot(svg, cli, chartArea, new Date(2024, 5, 7), 2, "Found Critical Security Bug: Identified the 'session sharing bug'.");
+                addEventDot(svg, cli, chartArea, new Date(2024, 5, 9), 3, "Work with Sushrut and Santosh: Fixed 2 major security bugs.");
+                addEventDot(svg, cli, chartArea, new Date(2024, 5, 14), 4, "Internal Demo & Testing Workshop: Added 6 new tasks after security testing and workshop.");
+                addEventDot(svg, cli, chartArea, new Date(2024, 5, 9), 5, "Observation: Insufficient Burndown Speed: Testing in the team is underdeveloped. Increased manual testing duration and quality issues, leading to rework. Plan to add a test automation person to the team.");
             });
 
             chart.draw(data, options);
@@ -234,11 +254,36 @@
         // Add hover effect on table rows
         document.querySelectorAll('.event-table tbody tr').forEach(row => {
             row.addEventListener('mouseover', () => {
-                row.classList.add('highlight');
+                var eventNumber = row.getAttribute('data-event');
+                document.querySelectorAll(`.marker[data-event="${eventNumber}"]`).forEach(marker => {
+                    marker.classList.add('highlight');
+                });
             });
             row.addEventListener('mouseout', () => {
-                row.classList.remove('highlight');
+                var eventNumber = row.getAttribute('data-event');
+                document.querySelectorAll(`.marker[data-event="${eventNumber}"]`).forEach(marker => {
+                    marker.classList.remove('highlight');
+                });
             });
+        });
+
+        // Add hover effect on markers
+        document.addEventListener('mouseover', function (e) {
+            if (e.target.classList.contains('marker')) {
+                var eventNumber = e.target.getAttribute('data-event');
+                document.querySelectorAll(`.event-table tbody tr[data-event="${eventNumber}"]`).forEach(row => {
+                    row.classList.add('highlight');
+                });
+            }
+        });
+
+        document.addEventListener('mouseout', function (e) {
+            if (e.target.classList.contains('marker')) {
+                var eventNumber = e.target.getAttribute('data-event');
+                document.querySelectorAll(`.event-table tbody tr[data-event="${eventNumber}"]`).forEach(row => {
+                    row.classList.remove('highlight');
+                });
+            }
         });
     </script>
 </body>
