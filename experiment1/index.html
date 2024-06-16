@@ -15,19 +15,62 @@
         google.charts.load('current', { "packages": ["corechart"] });
         google.charts.setOnLoadCallback(drawChart);
 
+        // Configuration data
+        const numTasks = 40;
+        const startDate = new Date(2024, 5, 3);
+        const endDate = new Date(2024, 6, 25);
+        const chartHeight = numTasks * 10; // 10px per task
+        const numDays = (endDate - startDate) / (1000 * 60 * 60 * 24) + 1;
+        const chartWidth = numDays * 10; // 10px per day
+
+        // Setting the chart size
+        document.getElementById('chart').style.width = `${chartWidth}px`;
+        document.getElementById('chart').style.height = `${chartHeight}px`;
+
+        // Function to add a vertical bar with text
+        function addVerticalBar(svg, cli, chartArea, date, text, color) {
+            var x = cli.getXLocation(date);
+            var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x);
+            line.setAttribute('x2', x);
+            line.setAttribute('y1', chartArea.top);
+            line.setAttribute('y2', chartArea.top + chartArea.height);
+            line.setAttribute('stroke', color);
+            line.setAttribute('stroke-width', 2);
+            svg.appendChild(line);
+
+            var label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            label.setAttribute('x', x + 5);
+            label.setAttribute('y', chartArea.top + 20);
+            label.setAttribute('fill', color);
+            label.textContent = text;
+            svg.appendChild(label);
+        }
+
+        // Function to add vertical gridlines for each Monday
+        function addWeekMarkers(svg, cli, chartArea, startDate, endDate) {
+            var firstMonday = new Date(startDate);
+            while (firstMonday.getDay() !== 1) {
+                firstMonday.setDate(firstMonday.getDate() + 1);
+            }
+
+            var currentMonday = new Date(firstMonday);
+            while (currentMonday <= endDate) {
+                var x = cli.getXLocation(currentMonday);
+                var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x);
+                line.setAttribute('x2', x);
+                line.setAttribute('y1', chartArea.top);
+                line.setAttribute('y2', chartArea.top + chartArea.height);
+                line.setAttribute('stroke', '#cccccc');
+                line.setAttribute('stroke-width', 1);
+                svg.appendChild(line);
+
+                currentMonday.setDate(currentMonday.getDate() + 7); // Move to the next Monday
+            }
+        }
+
         function drawChart() {
-            // Configuration data
-            const numTasks = 40;
-            const startDate = new Date(2024, 5, 3);
-            const endDate = new Date(2024, 6, 25);
-            const chartHeight = numTasks * 10; // 10px per task
-            const numDays = (endDate - startDate) / (1000 * 60 * 60 * 24) + 1;
-            const chartWidth = numDays * 10; // 10px per day
-
-            // Setting the chart size
-            document.getElementById('chart').style.width = `${chartWidth}px`;
-            document.getElementById('chart').style.height = `${chartHeight}px`;
-
             // Data for the chart
             var data = google.visualization.arrayToDataTable([
                 ["Date", "What's next tasks remaining", "Total Tasks Remaining", { type: "string", role: "annotation" }],
@@ -117,46 +160,10 @@
                 var svg = chart.getContainer().getElementsByTagName('svg')[0];
 
                 // Add vertical gridlines for each Monday
-                var firstMonday = new Date(startDate);
-                while (firstMonday.getDay() !== 1) {
-                    firstMonday.setDate(firstMonday.getDate() + 1);
-                }
+                addWeekMarkers(svg, cli, chartArea, startDate, endDate);
 
-                var currentMonday = new Date(firstMonday);
-                while (currentMonday <= endDate) {
-                    var x = cli.getXLocation(currentMonday);
-                    var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                    line.setAttribute('x1', x);
-                    line.setAttribute('x2', x);
-                    line.setAttribute('y1', chartArea.top);
-                    line.setAttribute('y2', chartArea.top + chartArea.height);
-                    line.setAttribute('stroke', '#cccccc');
-                    line.setAttribute('stroke-width', 1);
-                    svg.appendChild(line);
-
-                    currentMonday.setDate(currentMonday.getDate() + 7); // Move to the next Monday
-                }
-
-                // Draw a red vertical bar for the deadline
-                var deadline = new Date(2024, 6, 16);
-                var x = cli.getXLocation(deadline);
-
-                var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', x);
-                line.setAttribute('x2', x);
-                line.setAttribute('y1', chartArea.top);
-                line.setAttribute('y2', chartArea.top + chartArea.height);
-                line.setAttribute('stroke', 'red');
-                line.setAttribute('stroke-width', 2);
-                svg.appendChild(line);
-
-                // Add label for the deadline
-                var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                text.setAttribute('x', x + 5);
-                text.setAttribute('y', chartArea.top + 20);
-                text.setAttribute('fill', 'red');
-                text.textContent = "Jens's presentation of the software";
-                svg.appendChild(text);
+                // Add a red vertical bar for the deadline
+                addVerticalBar(svg, cli, chartArea, new Date(2024, 6, 16), "Jens's presentation of the software", 'red');
             });
 
             chart.draw(data, options);
