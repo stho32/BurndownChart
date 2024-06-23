@@ -12,13 +12,25 @@
         <canvas id="burndownChart"></canvas>
     </div>
     <script>
-        const ctx = document.getElementById('burndownChart').getContext('2d');
+        // Data Section
         const initialTasks = 35;
-        const accomplishments = [2, 2, 1]; // Example accomplishments, replace with your actual data
+        const accomplishments = [
+            { month: 'Mar 2024', tasks: 2 },
+            { month: 'Apr 2024', tasks: 2 },
+            { month: 'May 2024', tasks: 1 }
+        ]; // Example accomplishments, replace with your actual data
+
+        const labels = [
+            'Mar 2024', 'Apr 2024', 'May 2024', 'Jun 2024', 'Jul 2024', 'Aug 2024', 'Sep 2024', 'Oct 2024', 'Nov 2024', 'Dec 2024',
+            'Jan 2025', 'Feb 2025', 'Mar 2025', 'Apr 2025', 'May 2025', 'Jun 2025', 'Jul 2025', 'Aug 2025', 'Sep 2025', 'Oct 2025', 'Nov 2025', 'Dec 2025'
+        ];
+
+        // Calculate tasks remaining
         let remainingTasks = initialTasks;
-        const tasksRemaining = accomplishments.map(accomplishment => remainingTasks -= accomplishment);
+        const tasksRemaining = accomplishments.map(accomplishment => remainingTasks -= accomplishment.tasks);
         tasksRemaining.unshift(initialTasks); // Add initial tasks to the beginning of the array
 
+        // Function to calculate trendline
         function calculateTrendline(data, length) {
             const n = data.length;
             const sumX = n * (n - 1) / 2;
@@ -32,11 +44,9 @@
             return Array.from({ length }, (_, x) => Math.max(slope * x + intercept, 0));
         }
 
+        // Chart data
         const data = {
-            labels: [
-                'Mar 2024', 'Apr 2024', 'May 2024', 'Jun 2024', 'Jul 2024', 'Aug 2024', 'Sep 2024', 'Oct 2024', 'Nov 2024', 'Dec 2024',
-                'Jan 2025', 'Feb 2025', 'Mar 2025', 'Apr 2025', 'May 2025', 'Jun 2025', 'Jul 2025', 'Aug 2025', 'Sep 2025', 'Oct 2025', 'Nov 2025', 'Dec 2025'
-            ],
+            labels: labels,
             datasets: [{
                 label: 'Tasks Remaining',
                 data: tasksRemaining.map(value => Math.max(value, 0)),
@@ -46,7 +56,7 @@
                 tension: 0.1
             }, {
                 label: 'Trendline',
-                data: calculateTrendline(tasksRemaining, 22), // Extend trendline to cover all labels
+                data: calculateTrendline(tasksRemaining, labels.length), // Extend trendline to cover all labels
                 borderColor: 'rgba(255, 165, 0, 1)', // Orange color for the trendline
                 borderWidth: 2,
                 fill: false,
@@ -55,6 +65,7 @@
             }]
         };
 
+        // Chart configuration
         const config = {
             type: 'line',
             data: data,
@@ -71,13 +82,15 @@
                     x: {
                         title: {
                             display: true,
-                            text: 'Calendar Weeks'
+                            text: 'Months'
                         }
                     }
                 }
             }
         };
 
+        // Create the chart
+        const ctx = document.getElementById('burndownChart').getContext('2d');
         const burndownChart = new Chart(ctx, config);
     </script>
 </body>
