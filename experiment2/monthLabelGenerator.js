@@ -13,4 +13,7 @@ function generateMonthLabels(startDate, endDate) {
     return labels;
 }
 
-module.exports = { generateMonthLabels };
+// Export for Node.js environment (testing)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { generateMonthLabels };
+}

@@ -11,4 +11,7 @@ function calculateTrendline(data, length) {
     return Array.from({ length }, (_, x) => Math.max(slope * x + intercept, 0));
 }
 
-module.exports = { calculateTrendline };
+// Export for Node.js environment (testing)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { calculateTrendline };
+}

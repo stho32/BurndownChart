@@ -55,4 +55,7 @@ class MonthlyBurndownChart {
     }
 }
 
-module.exports = { MonthlyBurndownChart };
+// Export for Node.js environment (testing)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { MonthlyBurndownChart };
+}
