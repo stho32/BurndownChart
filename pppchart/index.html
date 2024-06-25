@@ -17,6 +17,7 @@
         <div class="row">
             <div class="col-md-8">
                 <canvas id="spiderChart"></canvas>
+                <div id="projectSummary" class="mt-4"></div>
             </div>
             <div class="col-md-4">
                 <div id="yamlEditor"></div>
@@ -136,6 +137,10 @@
                 data: data,
                 options: options
             });
+
+            // Generate and display the summary
+            const summaryElement = document.getElementById('projectSummary');
+            summaryElement.innerHTML = generateProjectSummary(config);
         }
 
         const documentation = {
@@ -558,6 +563,37 @@
             document.execCommand('copy');
             document.body.removeChild(tempElement);
             alert('Detailed documentation copied to clipboard!');
+        }
+
+        function generateProjectSummary(config) {
+            const doc = documentation[currentLanguage];
+            let summary = '';
+
+            config.projects.forEach((project, index) => {
+                summary += `<h4>${project.name}</h4>`;
+                summary += '<p>';
+                
+                ['people', 'product', 'process'].forEach(dimension => {
+                    const avgScore = Object.values(project[dimension]).reduce((a, b) => a + b, 0) / Object.values(project[dimension]).length;
+                    const dimensionDoc = doc.dimensions.find(d => d.name.toLowerCase() === dimension);
+                    const topFactors = Object.entries(project[dimension])
+                        .sort(([,a], [,b]) => b - a)
+                        .slice(0, 2)
+                        .map(([factor, value]) => `${factor} (${value})`);
+                    const bottomFactors = Object.entries(project[dimension])
+                        .sort(([,a], [,b]) => a - b)
+                        .slice(0, 1)
+                        .map(([factor, value]) => `${factor} (${value})`);
+                    
+                    summary += `<strong>${dimensionDoc.name}:</strong> Avg ${avgScore.toFixed(1)}. `;
+                    summary += `Top: ${topFactors.join(', ')}. `;
+                    summary += `Bottom: ${bottomFactors.join(', ')}. `;
+                });
+                
+                summary += '</p>';
+            });
+
+            return summary;
         }
 
         document.getElementById('updateChart').addEventListener('click', updateChart);
