@@ -5,8 +5,8 @@ Github page url: https://stho32.github.io/BurndownChart/
 
 ## Contained Charts
 
-- [Source Code Quality Chart](source-code-quality/index.html)
-- [Project Quality Chart](pppchart/index.html)
-- [Burndown Chart (Experiment 1)](experiment1/index.html)
-- [Burndown Chart (Experiment 2)](experiment2/index.html)
-- [Burndown Chart (Experiment 3)](experiment3/index.html)
+- [Source Code Quality Chart](https://stho32.github.io/BurndownChart/source-code-quality/index.html)
+- [Project Quality Chart](https://stho32.github.io/BurndownChart/pppchart/index.html)
+- [Burndown Chart (Experiment 1)](https://stho32.github.io/BurndownChart/experiment1/index.html)
+- [Burndown Chart (Experiment 2)](https://stho32.github.io/BurndownChart/experiment2/index.html)
+- [Burndown Chart (Experiment 3)](https://stho32.github.io/BurndownChart/experiment3/index.html)
