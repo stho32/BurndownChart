@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Source Code Quality Chart</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/yaml/yaml.min.js"></script>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Source Code Quality Chart</h1>
+        <div class="row">
+            <div class="col-md-8">
+                <canvas id="codeQualityChart" width="800" height="800"></canvas>
+                <div id="codeSummary" class="mt-4"></div>
+            </div>
+            <div class="col-md-4">
+                <div id="yamlEditor"></div>
+                <button id="updateChart" class="btn btn-primary mt-2">Update Chart</button>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12">
+                <h2>Documentation</h2>
+                <div class="mb-3">
+                    <button id="toggleLanguage" class="btn btn-secondary">Switch to German</button>
+                    <button id="toggleDocLanguage" class="btn btn-secondary ml-2">Switch Summary to German</button>
+                    <button id="copyDocumentation" class="btn btn-info ms-2">Copy Documentation</button>
+                </div>
+                <div id="documentation">
+                    <!-- Documentation content will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('codeQualityChart').getContext('2d');
+        let chart;
+        let currentLanguage = 'en';
+        let currentSummaryLanguage = 'en';
+        let editor;
+
+        function initializeCodeMirror() {
+            editor = CodeMirror(document.getElementById('yamlEditor'), {
+                value: `components:
+  - name: Component A
+    color: '#FF6384'
+    ui:
+      design: 3
+      consistency: 2
+      accessibility: 4
+    ux:
+      intuitiveness: 3
+      responsiveness: 4
+      error_handling: 2
+    architecture:
+      modularity: 3
+      scalability: 2
+      patterns: 4
+    code_cleanliness:
+      readability: 3
+      consistency: 4
+      documentation: 2
+    code_extensibility:
+      extensibility: 3
+      maintainability: 2
+      reusability: 4
+    performance:
+      runtime: 3
+      memory_usage: 4
+      load_time: 2
+  - name: Component B
+    color: '#36A2EB'
+    ui:
+      design: 4
+      consistency: 3
+      accessibility: 3
+    ux:
+      intuitiveness: 4
+      responsiveness: 3
+      error_handling: 4
+    architecture:
+      modularity: 4
+      scalability: 3
+      patterns: 3
+    code_cleanliness:
+      readability: 4
+      consistency: 3
+      documentation: 4
+    code_extensibility:
+      extensibility: 4
+      maintainability: 3
+      reusability: 3
+    performance:
+      runtime: 4
+      memory_usage: 3
+      load_time: 4`,
+                mode: 'yaml',
+                lineNumbers: true,
+                theme: 'default'
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeCodeMirror);
+
+        function updateChart() {
+            const yamlText = editor.getValue();
+            const config = jsyaml.load(yamlText);
+
+            const data = {
+                labels: [
+                    'UI Design', 'UI Consistency', 'UI Accessibility',
+                    'UX Intuitiveness', 'UX Responsiveness', 'UX Error Handling',
+                    'Architecture Modularity', 'Architecture Scalability', 'Architecture Patterns',
+                    'Code Readability', 'Code Consistency', 'Code Documentation',
+                    'Extensibility', 'Maintainability', 'Reusability',
+                    'Runtime Performance', 'Memory Usage', 'Load Time'
+                ],
+                datasets: config.components.map(component => ({
+                    label: component.name,
+                    data: [
+                        component.ui.design, component.ui.consistency, component.ui.accessibility,
+                        component.ux.intuitiveness, component.ux.responsiveness, component.ux.error_handling,
+                        component.architecture.modularity, component.architecture.scalability, component.architecture.patterns,
+                        component.code_cleanliness.readability, component.code_cleanliness.consistency, component.code_cleanliness.documentation,
+                        component.code_extensibility.extensibility, component.code_extensibility.maintainability, component.code_extensibility.reusability,
+                        component.performance.runtime, component.performance.memory_usage, component.performance.load_time
+                    ],
+                    fill: true,
+                    backgroundColor: component.color ? `${component.color}33` : `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.2)`,
+                    borderColor: component.color || `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`,
+                    pointBackgroundColor: component.color || `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`,
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: component.color || `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`
+                }))
+            };
+
+            const options = {
+                scales: {
+                    r: {
+                        angleLines: {
+                            display: true
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 4
+                    }
+                }
+            };
+
+            if (chart) {
+                chart.destroy();
+            }
+
+            chart = new Chart(ctx, {
+                type: 'radar',
+                data: data,
+                options: options
+            });
+
+            // Generate and display the summary
+            const summaryElement = document.getElementById('codeSummary');
+            summaryElement.innerHTML = generateCodeSummary(config);
+        }
+
+        const documentation = {
+            en: {
+                variables: [
+                    { name: 'name', description: 'Component name (required)' },
+                    { name: 'color', description: 'Component color in hex format (optional)' }
+                ],
+                dimensions: [
+                    {
+                        name: 'UI',
+                        factors: [
+                            {
+                                name: 'design',
+                                description: 'Visual appeal and layout of the user interface',
+                                levels: [
+                                    '0 - Poor design, confusing layout',
+                                    '1 - Basic design, some layout issues',
+                                    '2 - Adequate design, functional layout',
+                                    '3 - Good design, intuitive layout',
+                                    '4 - Excellent design, highly intuitive and visually appealing'
+                                ]
+                            },
+                            {
+                                name: 'consistency',
+                                description: 'Consistency of UI elements and patterns',
+                                levels: [
+                                    '0 - Highly inconsistent UI elements',
+                                    '1 - Some inconsistencies in UI elements',
+                                    '2 - Mostly consistent UI elements',
+                                    '3 - Consistent UI elements with minor variations',
+                                    '4 - Highly consistent UI elements throughout'
+                                ]
+                            },
+                            {
+                                name: 'accessibility',
+                                description: 'Accessibility features for users with disabilities',
+                                levels: [
+                                    '0 - No accessibility features',
+                                    '1 - Basic accessibility features',
+                                    '2 - Some accessibility features implemented',
+                                    '3 - Most accessibility features implemented',
+                                    '4 - Fully accessible, following WCAG guidelines'
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        name: 'UX',
+                        factors: [
+                            {
+                                name: 'intuitiveness',
+                                description: 'Ease of use and learning for users',
+                                levels: [
+                                    '0 - Confusing and difficult to use',
+                                    '1 - Requires significant learning',
+                                    '2 - Moderately intuitive, some learning required',
+                                    '3 - Intuitive for most users',
+                                    '4 - Highly intuitive, minimal learning curve'
+                                ]
+                            },
+                            {
+                                name: 'responsiveness',
+                                description: 'Speed and smoothness of user interactions',
+                                levels: [
+                                    '0 - Very slow and unresponsive',
+                                    '1 - Noticeable delays in responses',
+                                    '2 - Adequate responsiveness',
+                                    '3 - Good responsiveness, minor delays',
+                                    '4 - Highly responsive, smooth interactions'
+                                ]
+                            },
+                            {
+                                name: 'error_handling',
+                                description: 'Effectiveness of error prevention and recovery',
+                                levels: [
+                                    '0 - Poor error handling, frequent crashes',
+                                    '1 - Basic error handling, some unhandled errors',
+                                    '2 - Adequate error handling',
+                                    '3 - Good error handling and prevention',
+                                    '4 - Excellent error handling, prevention, and recovery'
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        name: 'Architecture',
+                        factors: [
+                            {
+                                name: 'modularity',
+                                description: 'Degree of component independence and reusability',
+                                levels: [
+                                    '0 - Monolithic, tightly coupled code',
+                                    '1 - Some modularization, high coupling',
+                                    '2 - Moderate modularization',
+                                    '3 - Good modularization, low coupling',
+                                    '4 - Highly modular, loosely coupled components'
+                                ]
+                            },
+                            {
+                                name: 'scalability',
+                                description: 'Ability to handle growth and increased load',
+                                levels: [
+                                    '0 - Poor scalability, significant bottlenecks',
+                                    '1 - Limited scalability',
+                                    '2 - Moderate scalability',
+                                    '3 - Good scalability, some optimizations possible',
+                                    '4 - Highly scalable architecture'
+                                ]
+                            },
+                            {
+                                name: 'patterns',
+                                description: 'Use of appropriate design patterns',
+                                levels: [
+                                    '0 - No clear design patterns used',
+                                    '1 - Some design patterns, often misapplied',
+                                    '2 - Basic design patterns used correctly',
+                                    '3 - Good use of design patterns',
+                                    '4 - Excellent use of appropriate design patterns'
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        name: 'Code Cleanliness',
+                        factors: [
+                            {
+                                name: 'readability',
+                                description: 'Ease of understanding the code',
+                                levels: [
+                                    '0 - Very difficult to read and understand',
+                                    '1 - Poor readability, requires significant effort',
+                                    '2 - Moderate readability',
+                                    '3 - Good readability, easy to understand',
+                                    '4 - Highly readable, self-explanatory code'
+                                ]
+                            },
+                            {
+                                name: 'consistency',
+                                description: 'Consistent coding style and conventions',
+                                levels: [
+                                    '0 - Inconsistent coding style throughout',
+                                    '1 - Some consistency, many variations',
+                                    '2 - Moderate consistency',
+                                    '3 - Good consistency, minor variations',
+                                    '4 - Highly consistent coding style'
+                                ]
+                            },
+                            {
+                                name: 'documentation',
+                                description: 'Quality and completeness of code documentation',
+                                levels: [
+                                    '0 - No documentation',
+                                    '1 - Minimal documentation, often outdated',
+                                    '2 - Basic documentation',
+                                    '3 - Good documentation, some areas need improvement',
+                                    '4 - Excellent, comprehensive documentation'
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        name: 'Code Extensibility',
+                        factors: [
+                            {
+                                name: 'extensibility',
+                                description: 'Ease of adding new features or modifications',
+                                levels: [
+                                    '0 - Very difficult to extend or modify',
+                                    '1 - Requires significant effort to extend',
+                                    '2 - Moderately extensible',
+                                    '3 - Good extensibility, most changes are straightforward',
+                                    '4 - Highly extensible, easy to add new features'
+                                ]
+                            },
+                            {
+                                name: 'memory_usage',
+                                description: 'Efficient use of memory resources',
+                                levels: [
+                                    '0 - Excessive memory usage, frequent out of memory errors',
+                                    '1 - High memory usage, some optimizations needed',
+                                    '2 - Moderate memory usage',
+                                    '3 - Good memory efficiency, minor improvements possible',
+                                    '4 - Excellent memory efficiency, optimized resource usage'
+                                ]
+                            },
+                            {
+                                name: 'load_time',
+                                description: 'Time taken to load and initialize the component',
+                                levels: [
+                                    '0 - Very slow load times, unacceptable for users',
+                                    '1 - Slow load times, significant improvements needed',
+                                    '2 - Average load times',
+                                    '3 - Fast load times, minor optimizations possible',
+                                    '4 - Very fast load times, highly optimized'
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        name: 'Performance',
+                        factors: [
+                            {
+                                name: 'runtime',
+                                description: 'Execution speed and efficiency',
+                                levels: [
+                                    '0 - Very slow execution, unacceptable performance',
+                                    '1 - Slow execution, significant improvements needed',
+                                    '2 - Average execution speed',
+                                    '3 - Fast execution, minor optimizations possible',
+                                    '4 - Very fast execution, highly optimized'
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            de: {
+                // German translations for documentation (similar structure to English)
+                // ...
+            }
+        };
+
+        function generateDocumentation(lang) {
+            const doc = documentation[lang];
+            let html = '<h3>Variables</h3><ul>';
+            doc.variables.forEach(v => {
+                html += `<li><strong>${v.name}</strong>: ${v.description}</li>`;
+            });
+            html += '</ul>';
+
+            doc.dimensions.forEach(dim => {
+                html += `<h3>${dim.name}</h3>`;
+                dim.factors.forEach(factor => {
+                    html += `<details>
+                        <summary><strong>${factor.name}</strong>: ${factor.description}</summary>
+                        <ul>
+                            ${factor.levels.map((level, index) => `<li>${level}</li>`).join('')}
+                        </ul>
+                    </details>`;
+                });
+            });
+
+            return html;
+        }
+
+        function updateDocumentation() {
+            const docElement = document.getElementById('documentation');
+            docElement.innerHTML = generateDocumentation(currentLanguage);
+        }
+        function toggleLanguage() {
+            currentLanguage = currentLanguage === 'en' ? 'de' : 'en';
+            const toggleButton = document.getElementById('toggleLanguage');
+            toggleButton.textContent = currentLanguage === 'en' ? 'Switch to German' : 'Zu Englisch wechseln';
+            updateDocumentation();
+        }
+        function toggleSummaryLanguage() {
+            currentSummaryLanguage = currentSummaryLanguage === 'en' ? 'de' : 'en';
+            const toggleButton = document.getElementById('toggleDocLanguage');
+            toggleButton.textContent = currentSummaryLanguage === 'en' ? 'Switch Summary to German' : 'Zusammenfassung auf Englisch';
+            updateChart();
+        }
+        function copyDocumentation() {
+            const doc = documentation[currentLanguage];
+            let text = 'Source Code Quality Documentation\n\n';
+            text += 'Variables:\n';
+            doc.variables.forEach(v => {
+                text += `${v.name}: ${v.description}\n`;
+            });
+            text += '\n';
+            doc.dimensions.forEach(dim => {
+                text += `${dim.name}:\n`;
+                dim.factors.forEach(factor => {
+                    text += `${factor.name}: ${factor.description}\n`;
+                    factor.levels.forEach((level, index) => {
+                        text += `${index}: ${level}\n`;
+                    });
+                    text += '\n';
+                });
+            });
+            const tempElement = document.createElement('textarea');
+            tempElement.value = text;
+            document.body.appendChild(tempElement);
+            tempElement.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempElement);
+            alert('Detailed documentation copied to clipboard!');
+        }
+        function generateCodeSummary(config) {
+            const doc = documentation[currentSummaryLanguage];
+            let summary = '';
+            config.components.forEach((component, index) => {
+                summary += `<h4>${component.name}</h4>`;
+                summary += '<p>';
+                ['ui_ux', 'architecture', 'code_quality', 'maintainability', 'performance'].forEach(dimension => {
+                    const avgScore = Object.values(component[dimension]).reduce((a, b) => a + b, 0) / Object.values(component[dimension]).length;
+                    const dimensionDoc = doc.dimensions.find(d => d.name.toLowerCase().replace('/', '') === dimension);
+                    summary += `<strong>${dimensionDoc.name}:</strong> Avg ${avgScore.toFixed(1)}.`;
+                    Object.entries(component[dimension]).forEach(([factor, value]) => {
+                        const factorDoc = dimensionDoc.factors.find(f => f.name === factor);
+                        summary += `${factorDoc.description} (${value}): ${factorDoc.levels[value].split(' - ')[1]}.`;
+                    });
+                    summary += '<br>';
+                });
+                summary += '</p>';
+            });
+            return summary;
+        }
+        document.getElementById('updateChart').addEventListener('click', updateChart);
+        document.getElementById('toggleLanguage').addEventListener('click', toggleLanguage);
+        document.getElementById('toggleDocLanguage').addEventListener('click', toggleSummaryLanguage);
+        document.getElementById('copyDocumentation').addEventListener('click', copyDocumentation);
+        updateChart();
+        updateDocumentation();
+    </script>
+</body>
+
+</html>
