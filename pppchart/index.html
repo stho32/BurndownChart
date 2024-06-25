@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Quality</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/yaml/yaml.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Project Quality</h1>
+        <div class="row">
+            <div class="col-md-8">
+                <canvas id="spiderChart"></canvas>
+            </div>
+            <div class="col-md-4">
+                <div id="yamlEditor"></div>
+                <button id="updateChart" class="btn btn-primary mt-2">Update Chart</button>
+            </div>
+        </div>
+        <div class="row mt-5">
+            <div class="col-12">
+                <h2>Documentation</h2>
+                <div class="mb-3">
+                    <button id="toggleLanguage" class="btn btn-secondary">Switch to German</button>
+                    <button id="copyDocumentation" class="btn btn-info ms-2">Copy Documentation</button>
+                </div>
+                <div id="documentation">
+                    <!-- Documentation content will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('spiderChart').getContext('2d');
+        let chart;
+        let currentLanguage = 'en';
+        let editor;
+
+        function initializeCodeMirror() {
+            editor = CodeMirror(document.getElementById('yamlEditor'), {
+                value: `projects:
+  - name: Project A
+    color: '#FF6384'
+    people:
+      knowledge: 3
+      stability: 2
+      energy: 4
+      work_life_balance: 3
+    product:
+      functionality: 3
+      performance: 4
+      extensibility: 2
+      code_quality: 3
+      security: 4
+      maintainability: 2
+    process:
+      clarity: 3
+      autonomy: 2
+      quality: 4
+      efficiency: 3
+  - name: Project B
+    color: '#36A2EB'
+    people:
+      knowledge: 4
+      stability: 3
+      energy: 3
+      work_life_balance: 4
+    product:
+      functionality: 4
+      performance: 3
+      extensibility: 4
+      code_quality: 4
+      security: 3
+      maintainability: 3
+    process:
+      clarity: 4
+      autonomy: 3
+      quality: 3
+      efficiency: 4`,
+                mode: 'yaml',
+                lineNumbers: true,
+                theme: 'default'
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeCodeMirror);
+
+        function updateChart() {
+            const yamlText = editor.getValue();
+            const config = jsyaml.load(yamlText);
+
+            const data = {
+                labels: ['People', 'Product', 'Process'],
+                datasets: config.projects.map(project => ({
+                    label: project.name,
+                    data: [
+                        Object.values(project.people).reduce((a, b) => a + b) / 4,
+                        Object.values(project.product).reduce((a, b) => a + b) / 6,
+                        Object.values(project.process).reduce((a, b) => a + b) / 4
+                    ],
+                    fill: true,
+                    backgroundColor: project.color ? `${project.color}33` : `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.2)`,
+                    borderColor: project.color || `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`,
+                    pointBackgroundColor: project.color || `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`,
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: project.color || `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`
+                }))
+            };
+
+            const options = {
+                scales: {
+                    r: {
+                        angleLines: {
+                            display: true
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 4
+                    }
+                }
+            };
+
+            if (chart) {
+                chart.destroy();
+            }
+
+            chart = new Chart(ctx, {
+                type: 'radar',
+                data: data,
+                options: options
+            });
+        }
+
+        const documentation = {
+            en: {
+                variables: [
+                    { name: 'name', description: 'Project name (required)' },
+                    { name: 'color', description: 'Project color in hex format (optional)' }
+                ],
+                dimensions: [
+                    {
+                        name: 'People',
+                        factors: [
+                            {
+                                name: 'knowledge',
+                                description: 'Team knowledge and expertise',
+                                levels: [
+                                    '0 - The team lacks basic knowledge, requiring extensive training for simple tasks',
+                                    '1 - The team has limited knowledge, often requiring assistance for routine tasks',
+                                    '2 - The team has adequate knowledge but occasionally struggles with complex tasks',
+                                    '3 - The team has good knowledge, rarely requiring external assistance',
+                                    '4 - The team has excellent knowledge, readily accessible for all project needs'
+                                ]
+                            },
+                            {
+                                name: 'stability',
+                                description: 'Team turnover and consistency',
+                                levels: [
+                                    '0 - Extremely high turnover, team constantly changing',
+                                    '1 - High turnover, significant team changes throughout the project',
+                                    '2 - Moderate turnover, some key members remained stable',
+                                    '3 - Low turnover, most team members remained throughout the project',
+                                    '4 - Very stable team, minimal to no turnover during the project'
+                                ]
+                            },
+                            {
+                                name: 'energy',
+                                description: 'Team motivation and energy levels',
+                                levels: [
+                                    '0 - Team is completely burnt out and demotivated',
+                                    '1 - Team shows signs of fatigue and low motivation',
+                                    '2 - Team has average energy levels with occasional dips',
+                                    '3 - Team is generally energized and motivated',
+                                    '4 - Team is highly energized and enthusiastic throughout the project'
+                                ]
+                            },
+                            {
+                                name: 'work_life_balance',
+                                description: 'Balance between work and personal life',
+                                levels: [
+                                    '0 - Extremely poor work-life balance, constant overtime',
+                                    '1 - Poor work-life balance, frequent overtime',
+                                    '2 - Moderate work-life balance, occasional overtime',
+                                    '3 - Good work-life balance, rare overtime',
+                                    '4 - Excellent work-life balance, no unplanned overtime'
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        name: 'Product',
+                        factors: [
+                            {
+                                name: 'functionality',
+                                description: 'Product functionality and features',
+                                levels: [
+                                    '0 - Major functionality issues, product barely usable',
+                                    '1 - Significant functionality gaps, many features missing',
+                                    '2 - Basic functionality present, some features missing',
+                                    '3 - Good functionality, most features implemented',
+                                    '4 - Excellent functionality, all planned features implemented'
+                                ]
+                            },
+                            {
+                                name: 'performance',
+                                description: 'Product performance and efficiency',
+                                levels: [
+                                    '0 - Extremely poor performance, unusable in real-world conditions',
+                                    '1 - Poor performance, significant optimization needed',
+                                    '2 - Average performance, some optimization required',
+                                    '3 - Good performance, minor optimizations possible',
+                                    '4 - Excellent performance, highly optimized'
+                                ]
+                            },
+                            {
+                                name: 'extensibility',
+                                description: 'Ease of adding new features or modifications',
+                                levels: [
+                                    '0 - Extremely difficult to extend or modify',
+                                    '1 - Difficult to extend, requires significant effort',
+                                    '2 - Moderately extensible, some challenges present',
+                                    '3 - Good extensibility, most changes are straightforward',
+                                    '4 - Highly extensible, easy to add new features or modifications'
+                                ]
+                            },
+                            {
+                                name: 'code_quality',
+                                description: 'Quality and readability of the codebase',
+                                levels: [
+                                    '0 - Very poor code quality, difficult to understand or maintain',
+                                    '1 - Poor code quality, significant refactoring needed',
+                                    '2 - Average code quality, some areas need improvement',
+                                    '3 - Good code quality, generally clean and readable',
+                                    '4 - Excellent code quality, well-structured and easily maintainable'
+                                ]
+                            },
+                            {
+                                name: 'security',
+                                description: 'Product security and vulnerability protection',
+                                levels: [
+                                    '0 - Major security issues, highly vulnerable',
+                                    '1 - Significant security concerns, many vulnerabilities',
+                                    '2 - Basic security measures in place, some vulnerabilities remain',
+                                    '3 - Good security, most common vulnerabilities addressed',
+                                    '4 - Excellent security, comprehensive protection against vulnerabilities'
+                                ]
+                            },
+                            {
+                                name: 'maintainability',
+                                description: 'Ease of maintaining and updating the product',
+                                levels: [
+                                    '0 - Extremely difficult to maintain, requires complete overhaul',
+                                    '1 - Difficult to maintain, significant effort required for updates',
+                                    '2 - Moderately maintainable, some challenges in updates',
+                                    '3 - Good maintainability, most updates are straightforward',
+                                    '4 - Excellent maintainability, easy to update and maintain'
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        name: 'Process',
+                        factors: [
+                            {
+                                name: 'clarity',
+                                description: 'Clarity and understanding of processes',
+                                levels: [
+                                    '0 - No clear processes, complete chaos',
+                                    '1 - Vague processes, often misunderstood or ignored',
+                                    '2 - Basic processes in place, sometimes unclear',
+                                    '3 - Clear processes, generally well understood',
+                                    '4 - Very clear and well-defined processes, universally understood'
+                                ]
+                            },
+                            {
+                                name: 'autonomy',
+                                description: 'Team\'s ability to work independently',
+                                levels: [
+                                    '0 - No autonomy, constant supervision required',
+                                    '1 - Low autonomy, frequent intervention needed',
+                                    '2 - Moderate autonomy, occasional guidance required',
+                                    '3 - Good autonomy, team works independently most of the time',
+                                    '4 - High autonomy, team is self-directed and proactive'
+                                ]
+                            },
+                            {
+                                name: 'quality',
+                                description: 'Quality of task completion',
+                                levels: [
+                                    '0 - Very poor quality, constant rework required',
+                                    '1 - Poor quality, frequent corrections needed',
+                                    '2 - Average quality, some improvements needed',
+                                    '3 - Good quality, minor improvements possible',
+                                    '4 - Excellent quality, tasks consistently meet or exceed expectations'
+                                ]
+                            },
+                            {
+                                name: 'efficiency',
+                                description: 'Efficiency of processes and workflows',
+                                levels: [
+                                    '0 - Extremely inefficient processes, major bottlenecks',
+                                    '1 - Inefficient processes, significant time wasted',
+                                    '2 - Moderately efficient processes, some room for improvement',
+                                    '3 - Efficient processes, minor optimizations possible',
+                                    '4 - Highly efficient processes, optimized workflows'
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            de: {
+                variables: [
+                    { name: 'name', description: 'Projektname (erforderlich)' },
+                    { name: 'color', description: 'Projektfarbe im Hexadezimalformat (optional)' }
+                ],
+                dimensions: [
+                    {
+                        name: 'Menschen',
+                        factors: [
+                            {
+                                name: 'knowledge',
+                                description: 'Teamwissen und Expertise',
+                                levels: [
+                                    '0 - Dem Team fehlt grundlegendes Wissen, umfangreiche Schulungen für einfache Aufgaben erforderlich',
+                                    '1 - Das Team hat begrenztes Wissen, benötigt oft Hilfe bei Routineaufgaben',
+                                    '2 - Das Team hat angemessenes Wissen, kämpft gelegentlich mit komplexen Aufgaben',
+                                    '3 - Das Team hat gutes Wissen, benötigt selten externe Unterstützung',
+                                    '4 - Das Team hat ausgezeichnetes Wissen, für alle Projektanforderungen leicht zugänglich'
+                                ]
+                            },
+                            {
+                                name: 'stability',
+                                description: 'Teamfluktuation und Konsistenz',
+                                levels: [
+                                    '0 - Extrem hohe Fluktuation, Team ändert sich ständig',
+                                    '1 - Hohe Fluktuation, signifikante Teamänderungen während des Projekts',
+                                    '2 - Moderate Fluktuation, einige Schlüsselmitglieder blieben stabil',
+                                    '3 - Geringe Fluktuation, die meisten Teammitglieder blieben während des Projekts',
+                                    '4 - Sehr stabiles Team, minimale bis keine Fluktuation während des Projekts'
+                                ]
+                            },
+                            {
+                                name: 'energy',
+                                description: 'Teammotivation und Energieniveau',
+                                levels: [
+                                    '0 - Team ist völlig ausgebrannt und demotiviert',
+                                    '1 - Team zeigt Anzeichen von Ermüdung und geringer Motivation',
+                                    '2 - Team hat durchschnittliches Energieniveau mit gelegentlichen Einbrüchen',
+                                    '3 - Team ist generell energiegeladen und motiviert',
+                                    '4 - Team ist hochgradig energiegeladen und enthusiastisch während des gesamten Projekts'
+                                ]
+                            },
+                            {
+                                name: 'work_life_balance',
+                                description: 'Balance zwischen Arbeit und Privatleben',
+                                levels: [
+                                    '0 - Extrem schlechte Work-Life-Balance, ständige Überstunden',
+                                    '1 - Schlechte Work-Life-Balance, häufige Überstunden',
+                                    '2 - Moderate Work-Life-Balance, gelegentliche Überstunden',
+                                    '3 - Gute Work-Life-Balance, seltene Überstunden',
+                                    '4 - Ausgezeichnete Work-Life-Balance, keine ungeplanten Überstunden'
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        name: 'Produkt',
+                        factors: [
+                            {
+                                name: 'functionality',
+                                description: 'Produktfunktionalität und Features',
+                                levels: [
+                                    '0 - Schwerwiegende Funktionalitätsprobleme, Produkt kaum nutzbar',
+                                    '1 - Erhebliche Funktionalitätslücken, viele Features fehlen',
+                                    '2 - Grundlegende Funktionalität vorhanden, einige Features fehlen',
+                                    '3 - Gute Funktionalität, die meisten Features implementiert',
+                                    '4 - Ausgezeichnete Funktionalität, alle geplanten Features implementiert'
+                                ]
+                            },
+                            {
+                                name: 'performance',
+                                description: 'Produktleistung und Effizienz',
+                                levels: [
+                                    '0 - Extrem schlechte Leistung, unter realen Bedingungen unbrauchbar',
+                                    '1 - Schlechte Leistung, erhebliche Optimierung erforderlich',
+                                    '2 - Durchschnittliche Leistung, einige Optimierungen erforderlich',
+                                    '3 - Gute Leistung, kleinere Optimierungen möglich',
+                                    '4 - Ausgezeichnete Leistung, hochgradig optimiert'
+                                ]
+                            },
+                            {
+                                name: 'extensibility',
+                                description: 'Einfachheit des Hinzufügens neuer Features oder Änderungen',
+                                levels: [
+                                    '0 - Äußerst schwierig zu erweitern oder zu modifizieren',
+                                    '1 - Schwierig zu erweitern, erfordert erheblichen Aufwand',
+                                    '2 - Mäßig erweiterbar, einige Herausforderungen vorhanden',
+                                    '3 - Gute Erweiterbarkeit, die meisten Änderungen sind unkompliziert',
+                                    '4 - Hochgradig erweiterbar, einfaches Hinzufügen neuer Features oder Änderungen'
+                                ]
+                            },
+                            {
+                                name: 'code_quality',
+                                description: 'Qualität und Lesbarkeit des Codes',
+                                levels: [
+                                    '0 - Sehr schlechte Code-Qualität, schwer zu verstehen oder zu warten',
+                                    '1 - Schlechte Code-Qualität, erhebliches Refactoring erforderlich',
+                                    '2 - Durchschnittliche Code-Qualität, einige Bereiche müssen verbessert werden',
+                                    '3 - Gute Code-Qualität, generell sauber und lesbar',
+                                    '4 - Ausgezeichnete Code-Qualität, gut strukturiert und leicht wartbar'
+                                ]
+                            },
+                            {
+                                name: 'security',
+                                description: 'Produktsicherheit und Schutz vor Schwachstellen',
+                                levels: [
+                                    '0 - Schwerwiegende Sicherheitsprobleme, hochgradig anfällig',
+                                    '1 - Erhebliche Sicherheitsbedenken, viele Schwachstellen',
+                                    '2 - Grundlegende Sicherheitsmaßnahmen vorhanden, einige Schwachstellen bleiben',
+                                    '3 - Gute Sicherheit, die meisten gängigen Schwachstellen adressiert',
+                                    '4 - Ausgezeichnete Sicherheit, umfassender Schutz gegen Schwachstellen'
+                                ]
+                            },
+                            {
+                                name: 'maintainability',
+                                description: 'Einfachheit der Wartung und Aktualisierung des Produkts',
+                                levels: [
+                                    '0 - Äußerst schwierig zu warten, erfordert komplette Überarbeitung',
+                                    '1 - Schwierig zu warten, erheblicher Aufwand für Updates erforderlich',
+                                    '2 - Mäßig wartbar, einige Herausforderungen bei Updates',
+                                    '3 - Gute Wartbarkeit, die meisten Updates sind unkompliziert',
+                                    '4 - Ausgezeichnete Wartbarkeit, einfach zu aktualisieren und zu warten'
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        name: 'Prozess',
+                        factors: [
+                            {
+                                name: 'clarity',
+                                description: 'Klarheit und Verständnis der Prozesse',
+                                levels: [
+                                    '0 - Keine klaren Prozesse, völliges Chaos',
+                                    '1 - Vage Prozesse, oft missverstanden oder ignoriert',
+                                    '2 - Grundlegende Prozesse vorhanden, manchmal unklar',
+                                    '3 - Klare Prozesse, generell gut verstanden',
+                                    '4 - Sehr klare und gut definierte Prozesse, universell verstanden'
+                                ]
+                            },
+                            {
+                                name: 'autonomy',
+                                description: 'Fähigkeit des Teams, unabhängig zu arbeiten',
+                                levels: [
+                                    '0 - Keine Autonomie, ständige Überwachung erforderlich',
+                                    '1 - Geringe Autonomie, häufige Intervention erforderlich',
+                                    '2 - Moderate Autonomie, gelegentliche Anleitung erforderlich',
+                                    '3 - Gute Autonomie, Team arbeitet meist unabhängig',
+                                    '4 - Hohe Autonomie, Team ist selbstgesteuert und proaktiv'
+                                ]
+                            },
+                            {
+                                name: 'quality',
+                                description: 'Qualität der Aufgabenerledigung',
+                                levels: [
+                                    '0 - Sehr schlechte Qualität, ständige Nacharbeit erforderlich',
+                                    '1 - Schlechte Qualität, häufige Korrekturen erforderlich',
+                                    '2 - Durchschnittliche Qualität, einige Verbesserungen erforderlich',
+                                    '3 - Gute Qualität, kleinere Verbesserungen möglich',
+                                    '4 - Ausgezeichnete Qualität, Aufgaben erfüllen oder übertreffen konsistent die Erwartungen'
+                                ]
+                            },
+                            {
+                                name: 'efficiency',
+                                description: 'Effizienz der Prozesse und Arbeitsabläufe',
+                                levels: [
+                                    '0 - Äußerst ineffiziente Prozesse, große Engpässe',
+                                    '1 - Ineffiziente Prozesse, erhebliche Zeitverschwendung',
+                                    '2 - Mäßig effiziente Prozesse, einiger Verbesserungsspielraum',
+                                    '3 - Effiziente Prozesse, kleinere Optimierungen möglich',
+                                    '4 - Hochgradig effiziente Prozesse, optimierte Arbeitsabläufe'
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        function generateDocumentation(lang) {
+            const doc = documentation[lang];
+            let html = '<h3>Variables</h3><ul>';
+            doc.variables.forEach(v => {
+                html += `<li><strong>${v.name}</strong>: ${v.description}</li>`;
+            });
+            html += '</ul>';
+
+            doc.dimensions.forEach(dim => {
+                html += `<h3>${dim.name}</h3>`;
+                dim.factors.forEach(factor => {
+                    html += `<details>
+                        <summary><strong>${factor.name}</strong>: ${factor.description}</summary>
+                        <ul>
+                            ${factor.levels.map((level, index) => `<li>${level}</li>`).join('')}
+                        </ul>
+                    </details>`;
+                });
+            });
+
+            return html;
+        }
+
+        function updateDocumentation() {
+            const docElement = document.getElementById('documentation');
+            docElement.innerHTML = generateDocumentation(currentLanguage);
+        }
+
+        function toggleLanguage() {
+            currentLanguage = currentLanguage === 'en' ? 'de' : 'en';
+            const toggleButton = document.getElementById('toggleLanguage');
+            toggleButton.textContent = currentLanguage === 'en' ? 'Switch to German' : 'Zu Englisch wechseln';
+            updateDocumentation();
+        }
+
+        function copyDocumentation() {
+            const doc = documentation[currentLanguage];
+            let text = 'Project Quality Documentation\n\n';
+
+            text += 'Variables:\n';
+            doc.variables.forEach(v => {
+                text += `${v.name}: ${v.description}\n`;
+            });
+            text += '\n';
+
+            doc.dimensions.forEach(dim => {
+                text += `${dim.name}:\n`;
+                dim.factors.forEach(factor => {
+                    text += `  ${factor.name}: ${factor.description}\n`;
+                    factor.levels.forEach((level, index) => {
+                        text += `    ${index}: ${level}\n`;
+                    });
+                    text += '\n';
+                });
+            });
+
+            const tempElement = document.createElement('textarea');
+            tempElement.value = text;
+            document.body.appendChild(tempElement);
+            tempElement.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempElement);
+            alert('Detailed documentation copied to clipboard!');
+        }
+
+        document.getElementById('updateChart').addEventListener('click', updateChart);
+        document.getElementById('toggleLanguage').addEventListener('click', toggleLanguage);
+        document.getElementById('copyDocumentation').addEventListener('click', copyDocumentation);
+
+        updateChart();
+        updateDocumentation();
+    </script>
+</body>
+</html>
