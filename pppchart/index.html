@@ -24,11 +24,12 @@
                 <button id="updateChart" class="btn btn-primary mt-2">Update Chart</button>
             </div>
         </div>
-        <div class="row mt-5">
+        <div class="row mt-3">
             <div class="col-12">
                 <h2>Documentation</h2>
                 <div class="mb-3">
                     <button id="toggleLanguage" class="btn btn-secondary">Switch to German</button>
+                    <button id="toggleDocLanguage" class="btn btn-secondary ml-2">Switch Summary to German</button>
                     <button id="copyDocumentation" class="btn btn-info ms-2">Copy Documentation</button>
                 </div>
                 <div id="documentation">
@@ -42,6 +43,7 @@
         const ctx = document.getElementById('spiderChart').getContext('2d');
         let chart;
         let currentLanguage = 'en';
+        let currentSummaryLanguage = 'en';
         let editor;
 
         function initializeCodeMirror() {
@@ -535,6 +537,13 @@
             updateDocumentation();
         }
 
+        function toggleSummaryLanguage() {
+            currentSummaryLanguage = currentSummaryLanguage === 'en' ? 'de' : 'en';
+            const toggleButton = document.getElementById('toggleDocLanguage');
+            toggleButton.textContent = currentSummaryLanguage === 'en' ? 'Switch Summary to German' : 'Zusammenfassung auf Englisch';
+            updateChart();
+        }
+
         function copyDocumentation() {
             const doc = documentation[currentLanguage];
             let text = 'Project Quality Documentation\n\n';
@@ -566,7 +575,7 @@
         }
 
         function generateProjectSummary(config) {
-            const doc = documentation[currentLanguage];
+            const doc = documentation[currentSummaryLanguage];
             let summary = '';
 
             config.projects.forEach((project, index) => {
@@ -575,19 +584,15 @@
                 
                 ['people', 'product', 'process'].forEach(dimension => {
                     const avgScore = Object.values(project[dimension]).reduce((a, b) => a + b, 0) / Object.values(project[dimension]).length;
-                    const dimensionDoc = doc.dimensions.find(d => d.name.toLowerCase() === dimension);
-                    const topFactors = Object.entries(project[dimension])
-                        .sort(([,a], [,b]) => b - a)
-                        .slice(0, 2)
-                        .map(([factor, value]) => `${factor} (${value})`);
-                    const bottomFactors = Object.entries(project[dimension])
-                        .sort(([,a], [,b]) => a - b)
-                        .slice(0, 1)
-                        .map(([factor, value]) => `${factor} (${value})`);
-                    
+                    const dimensionDoc = doc.dimensions.find(d => d.name.toLowerCase() === dimension || d.name === (dimension === 'people' ? 'Menschen' : dimension === 'product' ? 'Produkt' : 'Prozess'));
                     summary += `<strong>${dimensionDoc.name}:</strong> Avg ${avgScore.toFixed(1)}. `;
-                    summary += `Top: ${topFactors.join(', ')}. `;
-                    summary += `Bottom: ${bottomFactors.join(', ')}. `;
+                    
+                    Object.entries(project[dimension]).forEach(([factor, value]) => {
+                        const factorDoc = dimensionDoc.factors.find(f => f.name === factor);
+                        summary += `${factorDoc.description} (${value}): ${factorDoc.levels[value].split(' - ')[1]}. `;
+                    });
+                    
+                    summary += '<br>';
                 });
                 
                 summary += '</p>';
@@ -598,6 +603,7 @@
 
         document.getElementById('updateChart').addEventListener('click', updateChart);
         document.getElementById('toggleLanguage').addEventListener('click', toggleLanguage);
+        document.getElementById('toggleDocLanguage').addEventListener('click', toggleSummaryLanguage);
         document.getElementById('copyDocumentation').addEventListener('click', copyDocumentation);
 
         updateChart();
