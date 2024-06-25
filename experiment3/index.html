@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Burndown Chart</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0/dist/chartjs-adapter-moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/1.0.2/chartjs-plugin-annotation.min.js"></script>
+    <style>
+        #chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Burndown Chart Generator</h1>
+        
+        <div class="row">
+            <div class="col-12 mb-4">
+                <h2>Burndown Chart</h2>
+                <div id="chart-container">
+                    <canvas id="burndownChart"></canvas>
+                </div>
+            </div>
+            <div class="col-12 mb-4">
+                <h2>Daily Throughput</h2>
+                <table id="throughputTable" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Throughput</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-12">
+                <h2>Input Data</h2>
+                <textarea id="inputData" class="form-control" rows="15" oninput="updateChart()">
+start_date: 2024-01-01
+end_date: 2024-01-31
+chart_width: 100%
+chart_height: 400px
+
+bar:
+  date: 2024-01-15
+  label: "Milestone"
+  color: #ff0000
+  tooltip: "Important project milestone"
+
+point:
+  date: 2024-01-02
+  value: 50
+  label: "Idea"
+  tooltip: "Bring in more manpower"
+
+data:
+  2024-01-01: 100
+  2024-01-02: 95
+  2024-01-03: 90
+                </textarea>
+                <div id="errorMessage" class="text-danger mt-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chart = null;
+        let resizeObserver = null;
+
+        function parseInputData(input) {
+            const lines = input.trim().split('\n');
+            let fromDate, toDate, bar, chartWidth, chartHeight;
+            const data = [];
+            const points = [];
+            let currentSection = '';
+
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+                if (trimmedLine.endsWith(':')) {
+                    currentSection = trimmedLine.slice(0, -1);
+                    continue;
+                }
+
+                if (trimmedLine === '') continue;
+
+                const [key, value] = trimmedLine.split(':').map(s => s.trim());
+
+                switch (currentSection) {
+                    case '':
+                        if (key === 'start_date') fromDate = value;
+                        if (key === 'end_date') toDate = value;
+                        if (key === 'chart_width') chartWidth = value;
+                        if (key === 'chart_height') chartHeight = value;
+                        break;
+                    case 'bar':
+                        if (!bar) bar = {};
+                        bar[key] = value.replace(/"/g, '');
+                        break;
+                    case 'point':
+                        if (!points.length || Object.keys(points[points.length - 1]).length === 4) {
+                            points.push({});
+                        }
+                        points[points.length - 1][key] = key === 'value' ? parseFloat(value) : value.replace(/"/g, '');
+                        break;
+                    case 'data':
+                        data.push({ date: key, value: parseFloat(value) });
+                        break;
+                }
+            }
+
+            if (!fromDate || !toDate || data.length === 0) {
+                throw new Error('Invalid input format');
+            }
+
+            return { fromDate, toDate, data, bar, points, chartWidth, chartHeight };
+        }
+
+        function updateChart() {
+            const inputData = document.getElementById('inputData').value;
+            const errorMessageElement = document.getElementById('errorMessage');
+            const chartContainer = document.getElementById('chart-container');
+            
+            try {
+                const { fromDate, toDate, data, bar, points, chartWidth, chartHeight } = parseInputData(inputData);
+                
+                if (chartWidth) chartContainer.style.width = chartWidth;
+                if (chartHeight) chartContainer.style.height = chartHeight;
+
+                const dates = data.map(item => item.date);
+                const actualData = data.map(item => item.value);
+                
+                const totalDays = moment(toDate).diff(moment(fromDate), 'days') + 1;
+                const initialWork = actualData[0];
+                const dailyIdealBurndown = initialWork / (totalDays - 1);
+                
+                const idealData = [];
+                const allDates = [];
+                
+                for (let i = 0; i < totalDays; i++) {
+                    const currentDate = moment(fromDate).add(i, 'days').format('YYYY-MM-DD');
+                    allDates.push(currentDate);
+                    idealData.push(Math.max(0, initialWork - (dailyIdealBurndown * i)));
+                }
+                
+                const sortedActualData = allDates.map(date => {
+                    const dataPoint = data.find(item => item.date === date);
+                    return dataPoint ? dataPoint.value : null;
+                });
+                
+                updateChartDisplay(allDates, idealData, sortedActualData, bar, points);
+                updateThroughputTable(allDates, sortedActualData);
+                errorMessageElement.textContent = '';
+
+                // Set up resize observer
+                if (resizeObserver) resizeObserver.disconnect();
+                resizeObserver = new ResizeObserver(entries => {
+                    for (let entry of entries) {
+                        if (entry.target === chartContainer) {
+                            chart.resize();
+                        }
+                    }
+                });
+                resizeObserver.observe(chartContainer);
+
+            } catch (error) {
+                errorMessageElement.textContent = `Error: ${error.message}`;
+                if (chart) {
+                    chart.destroy();
+                    chart = null;
+                }
+                clearThroughputTable();
+            }
+        }
+
+        function updateChartDisplay(dates, idealData, actualData, bar, points) {
+            const ctx = document.getElementById('burndownChart').getContext('2d');
+            
+            if (chart) {
+                chart.destroy();
+            }
+
+            const data = {
+                labels: dates,
+                datasets: [
+                    {
+                        label: 'Ideal Burndown',
+                        data: idealData,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderDash: [5, 5],
+                        fill: false
+                    },
+                    {
+                        label: 'Actual Burndown',
+                        data: actualData,
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        fill: false
+                    },
+                    {
+                        label: 'Points',
+                        data: points.map(p => ({ x: p.date, y: p.value })),
+                        pointBackgroundColor: 'rgba(255, 206, 86, 1)',
+                        pointBorderColor: 'rgba(255, 206, 86, 1)',
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        type: 'scatter'
+                    }
+                ]
+            };
+
+            const config = {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day',
+                                displayFormats: {
+                                    day: 'YYYY-MM-DD'
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Remaining Work'
+                            },
+                            ticks: {
+                                stepSize: 10
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Sprint Burndown Chart'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.dataset.label === 'Points') {
+                                        const point = points.find(p => p.date === context.raw.x && p.value === context.raw.y);
+                                        return `${point.label}: ${point.tooltip}`;
+                                    }
+                                    return `${context.dataset.label}: ${context.formattedValue}`;
+                                }
+                            }
+                        },
+                        annotation: {
+                            annotations: [
+                                ...(bar ? [{
+                                    type: 'line',
+                                    mode: 'vertical',
+                                    scaleID: 'x',
+                                    value: bar.date,
+                                    borderColor: bar.color,
+                                    borderWidth: 2,
+                                    label: {
+                                        content: bar.label,
+                                        enabled: true,
+                                        position: 'top'
+                                    },
+                                    tooltip: {
+                                        content: bar.tooltip
+                                    },
+                                    enter: ({ element }) => {
+                                        element.options.borderWidth = 4;
+                                    },
+                                    leave: ({ element }) => {
+                                        element.options.borderWidth = 2;
+                                    }
+                                }] : []),
+                                ...points.map(point => ({
+                                    type: 'point',
+                                    xValue: point.date,
+                                    yValue: point.value,
+                                    backgroundColor: 'rgba(255, 206, 86, 1)',
+                                    radius: 6,
+                                    borderWidth: 2,
+                                    borderColor: 'black',
+                                    label: {
+                                        content: point.label,
+                                        enabled: false
+                                    },
+                                    enter: ({ element }) => {
+                                        element.options.radius = 8;
+                                        element.options.borderWidth = 3;
+                                    },
+                                    leave: ({ element }) => {
+                                        element.options.radius = 6;
+                                        element.options.borderWidth = 2;
+                                    }
+                                }))
+                            ]
+                        }
+                    },
+                    onHover: (event, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const element = activeElements[0];
+                            if (element.datasetIndex === 2) { // Points dataset
+                                const point = points.find(p => p.date === element.element.$context.raw.x && p.value === element.element.$context.raw.y);
+                                event.native.target.style.cursor = 'pointer';
+                                chart.canvas.title = `${point.label}: ${point.tooltip}`;
+                            } else if (bar && element.element.x === chart.scales.x.getPixelForValue(bar.date)) {
+                                event.native.target.style.cursor = 'pointer';
+                                chart.canvas.title = `${bar.label}: ${bar.tooltip}`;
+                            } else {
+                                event.native.target.style.cursor = 'default';
+                                chart.canvas.title = '';
+                            }
+                        } else {
+                            event.native.target.style.cursor = 'default';
+                            chart.canvas.title = '';
+                        }
+                    }
+                }
+            };
+
+            chart = new Chart(ctx, config);
+        }
+
+        function updateThroughputTable(dates, actualData) {
+            const tableBody = document.querySelector('#throughputTable tbody');
+            tableBody.innerHTML = '';
+
+            for (let i = 1; i < dates.length; i++) {
+                if (actualData[i] !== null && actualData[i-1] !== null) {
+                    const throughput = actualData[i-1] - actualData[i];
+                    const row = tableBody.insertRow();
+                    row.insertCell(0).textContent = dates[i];
+                    row.insertCell(1).textContent = throughput.toFixed(2);
+                }
+            }
+        }
+
+        function clearThroughputTable() {
+            const tableBody = document.querySelector('#throughputTable tbody');
+            tableBody.innerHTML = '';
+        }
+
+        // Initial chart update
+        updateChart();
+    </script>
+</body>
+</html>
