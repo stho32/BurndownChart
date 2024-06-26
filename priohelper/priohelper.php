@@ -78,14 +78,56 @@
     <title>Prio-Helper</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-size: 14px;
+        }
+        .container {
+            max-width: 1200px; /* Increased to accommodate the new layout */
+            padding: 10px;
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .form-label {
+            margin-bottom: 0.15rem;
+        }
+        .form-select, .form-check-input, .form-check-label {
+            font-size: 0.8rem; /* Slightly increased for better readability */
+        }
+        .mb-3 {
+            margin-bottom: 0.2rem !important;
+        }
+        .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.7rem;
+        }
+        #prioChart {
+            max-height: 250px; /* Reduced height to fit in the column */
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-5">
         <h1 class="mb-4">Priorisierungshelfer</h1>
         
-        <div class="row">
-            <div class="col-md-8">
-                <form method="get">
+        <form method="get">
+            <div class="row">
+                <div class="mt-4">
+
+                    <canvas id="prioChart"></canvas>
+
+                </div>
+                <div class="mt-4">
+
+                    <p>Die Priorität beträgt: <strong id="priorityDisplay"><?php echo $nutzen; ?></strong></p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
                     <div class="mb-3">
                         <label for="nutzungen" class="form-label"><strong>Nutzungen pro Mitarbeiter</strong></label>
                         <select name="nutzungen" id="nutzungen" class="form-select">
@@ -119,7 +161,9 @@
                             <option value="10" <?php echo IfEquals($extern, 10, "selected"); ?>>alle, wirklich alle</option>
                         </select>
                     </div>
+                </div>
 
+                <div class="col-md-4">
                     <div class="mb-3">
                         <label for="workaround" class="form-label"><strong>Workaround vorhanden</strong></label>
                         <select name="workaround" id="workaround" class="form-select">
@@ -146,26 +190,6 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label"><strong>Entspricht unseren Zielen</strong></label>
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" name="ziel[]" value="1" <?php echo IfEquals($ziel1, true, "checked"); ?> id="ziel1">
-                            <label class="form-check-label" for="ziel1">Mahr EDV ist der Top-Arbeitgeber in Deutschland</label>
-                        </div>
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" name="ziel[]" value="2" <?php echo IfEquals($ziel2, true, "checked"); ?> id="ziel2">
-                            <label class="form-check-label" for="ziel2">Mahr EDV ist das Top-Dienstleistungssystemhaus in Deutschland</label>
-                        </div>
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" name="ziel[]" value="3" <?php echo IfEquals($ziel3, true, "checked"); ?> id="ziel3">
-                            <label class="form-check-label" for="ziel3">Mahr EDV hat die top Cloud- und Managed-Angebote</label>
-                        </div>
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" name="ziel[]" value="4" <?php echo IfEquals($ziel4, true, "checked"); ?> id="ziel4">
-                            <label class="form-check-label" for="ziel4">Wir wachsen auf 250 Mitarbeiter und 9+ Standorte</label>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
                         <label for="entscheider" class="form-label"><strong>Entscheider-Prio</strong></label>
                         <select name="entscheider" id="entscheider" class="form-select">
                             <option value="1" <?php echo IfEquals($entscheider, 1, "selected"); ?>>Keine Prio</option>
@@ -187,21 +211,34 @@
                             <option value="10" <?php echo IfEquals($risiko, 10, "selected"); ?>>Mit absoluter Sicherheit / System steht</option>
                         </select>
                     </div>
+                </div>
 
-                    <button type="submit" class="btn btn-primary">Berechnen</button>
-                </form>
-
-                <?php if ($nutzen > 0) { ?>
-                    <div class="mt-4">
-                        <h3>Ergebnis</h3>
-                        <p>Die Priorität beträgt: <strong id="priorityDisplay"><?php echo $nutzen; ?></strong></p>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Entspricht unseren Zielen</strong></label>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="ziel[]" value="1" <?php echo IfEquals($ziel1, true, "checked"); ?> id="ziel1">
+                            <label class="form-check-label" for="ziel1">Mahr EDV ist der Top-Arbeitgeber in Deutschland</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="ziel[]" value="2" <?php echo IfEquals($ziel2, true, "checked"); ?> id="ziel2">
+                            <label class="form-check-label" for="ziel2">Mahr EDV ist das Top-Dienstleistungssystemhaus in Deutschland</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="ziel[]" value="3" <?php echo IfEquals($ziel3, true, "checked"); ?> id="ziel3">
+                            <label class="form-check-label" for="ziel3">Mahr EDV hat die top Cloud- und Managed-Angebote</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="ziel[]" value="4" <?php echo IfEquals($ziel4, true, "checked"); ?> id="ziel4">
+                            <label class="form-check-label" for="ziel4">Wir wachsen auf 250 Mitarbeiter und 9+ Standorte</label>
+                        </div>
                     </div>
-                <?php } ?>
+                </div>
             </div>
-            <div class="col-md-4">
-                <canvas id="prioChart"></canvas>
+            <div class="row">
+                <button type="submit" class="btn btn-primary mt-3">Berechnen</button>
             </div>
-        </div>
+        </form>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
@@ -249,6 +286,7 @@
                     <h3>Ergebnis</h3>
                     <p>Die Priorität beträgt: <strong id="priorityDisplay">${prio.toFixed(2)}</strong></p>
                 `;
+
                 document.querySelector('form').insertAdjacentElement('afterend', resultDiv);
             }
 
