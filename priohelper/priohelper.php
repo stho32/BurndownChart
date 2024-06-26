@@ -87,7 +87,7 @@
             <div class="col-md-8">
                 <form method="get">
                     <div class="mb-3">
-                        <label for="nutzungen" class="form-label"><strong>Nutzen</strong></label>
+                        <label for="nutzungen" class="form-label"><strong>Nutzungen pro Mitarbeiter</strong></label>
                         <select name="nutzungen" id="nutzungen" class="form-select">
                             <option value="1"  <?php echo IfEquals($nutzungen,  1, "selected"); ?>>bis 1</option>
                             <option value="2"  <?php echo IfEquals($nutzungen,  2, "selected"); ?>>bis 5</option>
@@ -99,7 +99,7 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="mitarbeiter" class="form-label">Anzahl der betroffenen MA insg.</label>
+                        <label for="mitarbeiter" class="form-label"><strong>Anzahl der betroffenen MA insg.</strong></label>
                         <select name="mitarbeiter" id="mitarbeiter" class="form-select">
                             <option value="1"  <?php echo IfEquals($mitarbeiter,  1, "selected"); ?>>bis 1</option>
                             <option value="2"  <?php echo IfEquals($mitarbeiter,  2, "selected"); ?>>bis 5</option>
@@ -111,7 +111,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="extern" class="form-label">Anzahl der DIREKT betroffenen Kunden/Externen</label>
+                        <label for="extern" class="form-label"><strong>Anzahl der DIREKT betroffenen Kunden/Externen</strong></label>
                         <select name="extern" id="extern" class="form-select">
                             <option value="1"  <?php echo IfEquals($extern,  1, "selected"); ?>>bis 1</option>
                             <option value="4"  <?php echo IfEquals($extern,  4, "selected"); ?>>mehrere</option>
@@ -121,7 +121,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="workaround" class="form-label">Workaround vorhanden</label>
+                        <label for="workaround" class="form-label"><strong>Workaround vorhanden</strong></label>
                         <select name="workaround" id="workaround" class="form-select">
                             <option value="1"  <?php echo IfEquals($workaround,  1, "selected"); ?>>nicht nötig</option>
                             <option value="5"  <?php echo IfEquals($workaround,  5, "selected"); ?>>ja</option>
@@ -130,7 +130,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="ersparnis" class="form-label">Ersparnis oder zs. Gewinn pro Monat insg. höchster Skalenpunkt zählt</label>
+                        <label for="ersparnis" class="form-label"><strong>Ersparnis oder zs. Gewinn pro Monat insg. höchster Skalenpunkt zählt</strong></label>
                         <select name="ersparnis" id="ersparnis" class="form-select">
                             <option value="1"  <?php echo IfEquals($ersparnis,  1, "selected"); ?>>0min; 0 EUR</option>
                             <option value="2"  <?php echo IfEquals($ersparnis,  2, "selected"); ?>>bis 30min; 200 EUR</option>
