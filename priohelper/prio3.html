@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Prio-Helper</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-size: 14px;
+        }
+        .container {
+            max-width: 1200px; /* Increased to accommodate the new layout */
+            padding: 10px;
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .form-label {
+            margin-bottom: 0.15rem;
+        }
+        .form-select, .form-check-input, .form-check-label {
+            font-size: 0.8rem; /* Slightly increased for better readability */
+        }
+        .mb-3 {
+            margin-bottom: 0.2rem !important;
+        }
+        .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.7rem;
+        }
+        #prioChart {
+            max-height: 250px; /* Reduced height to fit in the column */
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Priorisierungshelfer</h1>
+        
+        <form id="prioForm">
+            <div class="row">
+                <div class="mt-4">
+                    <canvas id="prioChart"></canvas>
+                </div>
+                <div class="mt-4">
+                    <p>Die Priorität beträgt: <strong id="priorityDisplay"></strong></p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="nutzungen" class="form-label"><strong>Nutzungen pro Mitarbeiter</strong></label>
+                        <select name="nutzungen" id="nutzungen" class="form-select">
+                            <option value="1">bis 1</option>
+                            <option value="2">bis 5</option>
+                            <option value="3">bis 10</option>
+                            <option value="6">bis 50</option>
+                            <option value="9">bis 100</option>
+                            <option value="10">&gt;100 oder es ist gesetzlich notwendig</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="mitarbeiter" class="form-label"><strong>Anzahl der betroffenen MA insg.</strong></label>
+                        <select name="mitarbeiter" id="mitarbeiter" class="form-select">
+                            <option value="1">bis 1</option>
+                            <option value="2">bis 5</option>
+                            <option value="3">bis 10</option>
+                            <option value="6">bis 25</option>
+                            <option value="9">bis alle</option>
+                            <option value="10">es ist gesetzlich notwendig oder es sind Externe involviert</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="extern" class="form-label"><strong>Anzahl der DIREKT betroffenen Kunden/Externen</strong></label>
+                        <select name="extern" id="extern" class="form-select">
+                            <option value="1">bis 1</option>
+                            <option value="4">mehrere</option>
+                            <option value="6">alle benötigen es, aber nicht alle haben es</option>
+                            <option value="10">alle, wirklich alle</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="workaround" class="form-label"><strong>Workaround vorhanden</strong></label>
+                        <select name="workaround" id="workaround" class="form-select">
+                            <option value="1">nicht nötig</option>
+                            <option value="5">ja</option>
+                            <option value="10">nein</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="ersparnis" class="form-label"><strong>Ersparnis oder zs. Gewinn pro Monat insg. höchster Skalenpunkt zählt</strong></label>
+                        <select name="ersparnis" id="ersparnis" class="form-select">
+                            <option value="1">0min; 0 EUR</option>
+                            <option value="2">bis 30min; 200 EUR</option>
+                            <option value="3">bis 1h; 400 EUR</option>
+                            <option value="4">bis 2h; 800 EUR</option>
+                            <option value="5">bis 4h; 1600 EUR</option>
+                            <option value="6">bis 8h; 3200 EUR</option>
+                            <option value="7">bis 16h; 6400 EUR</option>
+                            <option value="8">bis 32h; 12800 EUR</option>
+                            <option value="9">&gt;32h; 12800 EUR</option>
+                            <option value="10">Hilft SWE beim schneller sein</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="entscheider" class="form-label"><strong>Entscheider-Prio</strong></label>
+                        <select name="entscheider" id="entscheider" class="form-select">
+                            <option value="1">Keine Prio</option>
+                            <option value="2">Pascal, normale E-Mail</option>
+                            <option value="3">Pascal, rotes Ausrufezeichen / besonders wichtig</option>
+                            <option value="4">Fabian, normale E-Mail</option>
+                            <option value="5">Fabian, rotes Ausrufezeichen / besonders wichtig</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="risiko" class="form-label"><strong>Bei Risken: Risiko-Eintrittswahrscheinlichkeit</strong></label>
+                        <select name="risiko" id="risiko" class="form-select">
+                            <option value="1">nicht bewertet</option>
+                            <option value="3">vielleicht in den nächsten Jahren</option>
+                            <option value="5">vielleicht im nächsten Jahr</option>
+                            <option value="7">vielleicht in den nächsten Monaten</option>
+                            <option value="9">vielleicht im nächsten Monat</option>
+                            <option value="10">Mit absoluter Sicherheit / System steht</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Entspricht unseren Zielen</strong></label>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="ziel[]" value="1" id="ziel1">
+                            <label class="form-check-label" for="ziel1">Mahr EDV ist der Top-Arbeitgeber in Deutschland</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="ziel[]" value="2" id="ziel2">
+                            <label class="form-check-label" for="ziel2">Mahr EDV ist das Top-Dienstleistungssystemhaus in Deutschland</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="ziel[]" value="3" id="ziel3">
+                            <label class="form-check-label" for="ziel3">Mahr EDV hat die top Cloud- und Managed-Angebote</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="ziel[]" value="4" id="ziel4">
+                            <label class="form-check-label" for="ziel4">Wir wachsen auf 250 Mitarbeiter und 9+ Standorte</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <button type="button" class="btn btn-primary mt-3" onclick="updatePriorityAndChart()">Berechnen</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('prioChart').getContext('2d');
+        let prioChart;
+
+        function updatePriorityAndChart() {
+            const nutzungen = parseInt(document.getElementById('nutzungen').value);
+            const mitarbeiter = parseInt(document.getElementById('mitarbeiter').value);
+            const extern = parseInt(document.getElementById('extern').value);
+            const workaround = parseInt(document.getElementById('workaround').value);
+            const ersparnis = parseInt(document.getElementById('ersparnis').value);
+            const zieleChecked = document.querySelectorAll('input[name="ziel[]"]:checked').length;
+            const entscheider = parseInt(document.getElementById('entscheider').value);
+            const risiko = parseInt(document.getElementById('risiko').value);
+
+            // Calculate priority (using the original PHP logic)
+            let ziele = zieleChecked;
+            if (ziele === 0) ziele = 1;
+            let zielpunkte = 0;
+            if (ziele === 1) zielpunkte = 1;
+            if (ziele === 2) zielpunkte = 5;
+            if (ziele === 3) zielpunkte = 7.5;
+            if (ziele === 4) zielpunkte = 10;
+
+            const risikoWert = risiko > 1 ? risiko / 10.0 : 1;
+            let prio = nutzungen * mitarbeiter * extern * workaround * ersparnis * zielpunkte * risikoWert;
+            
+            switch (entscheider) {
+                case 2: prio += 500; break;
+                case 3: prio += 1000; break;
+                case 4: prio += 1000; break;
+                case 5: prio += 2000; break;
+            }
+
+            // Update priority display
+            document.getElementById('priorityDisplay').textContent = prio.toFixed(2);
+
+            // Update chart
+            if (prioChart) {
+                prioChart.data.datasets[0].data = [nutzungen, mitarbeiter, extern, workaround, ersparnis, zielpunkte, entscheider, risiko];
+                prioChart.update();
+            } else {
+                prioChart = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Nutzungen', 'Mitarbeiter', 'Extern', 'Workaround', 'Ersparnis', 'Ziele', 'Entscheider', 'Risiko'],
+                        datasets: [{
+                            label: 'Priorität',
+                            data: [nutzungen, mitarbeiter, extern, workaround, ersparnis, zielpunkte, entscheider, risiko],
+                            fill: true,
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgba(75, 192, 192, 1)'
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            r: {
+                                angleLines: {
+                                    display: true
+                                },
+                                suggestedMin: 0,
+                                suggestedMax: 10
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Update URL
+            const form = document.getElementById('prioForm');
+            const formData = new FormData(form);
+            const searchParams = new URLSearchParams(formData);
+            const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
+            window.history.pushState({}, '', newUrl);
+        }
+
+        // Automated priority and chart update on change
+        document.querySelectorAll('select, input[type="checkbox"]').forEach(element => {
+            element.addEventListener('change', updatePriorityAndChart);
+        });
+
+        // Initial priority and chart update
+        updatePriorityAndChart();
+    </script>
+</body>
+</html>

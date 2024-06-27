@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Burndown Simulator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        textarea, input { width: 100%; margin-bottom: 10px; }
+        #chart, #progressBar, #debugOutput { margin-top: 20px; }
+        #progressBar { width: 100%; }
+        #debugOutput { background-color: #f0f0f0; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Task Burndown Simulator</h1>
+    <textarea id="csvData" rows="5" placeholder="Enter CSV data for task burndown">-1,0,-1,-2,1,0,-1</textarea>
+    <input type="number" id="remainingTasks" placeholder="Remaining tasks" value="4">
+    <button onclick="startSimulation()">Calculate</button>
+    <progress id="progressBar" value="0" max="100"></progress>
+    <div id="debugOutput"></div>
+    <canvas id="chart"></canvas>
+
+    <script>
+        const MAX_DAYS = 1000; // Maximum number of business days to simulate
+
+        function startSimulation() {
+            const csvData = document.getElementById('csvData').value.split(',').map(Number);
+            const remainingTasks = parseInt(document.getElementById('remainingTasks').value);
+
+            const results = [];
+            const simulations = 1000;
+            let currentSimulation = 0;
+
+            function runSimulationStep() {
+                if (currentSimulation < simulations) {
+                    let tasks = remainingTasks;
+                    let days = 0;
+                    while (tasks > 0 && days < MAX_DAYS) {
+                        const randomIndex = Math.floor(Math.random() * csvData.length);
+                        tasks += csvData[randomIndex];
+                        tasks = Math.max(0, tasks);
+                        days++;
+                    }
+                    if (days < MAX_DAYS) results.push(days);
+                    currentSimulation++;
+
+                    // Update progress bar
+                    document.getElementById('progressBar').value = (currentSimulation / simulations) * 100;
+
+                    // Schedule next simulation step
+                    setTimeout(runSimulationStep, 0);
+                } else {
+                    // All simulations complete, render chart
+                    renderChart(results, simulations);
+                }
+            }
+
+            // Start the simulation
+            runSimulationStep();
+        }
+
+        function renderChart(results, simulations) {
+            results.sort((a, b) => a - b);
+            const minDays = results[0];
+            const maxDays = results[results.length - 1];
+            
+            const data = new Array(maxDays - minDays + 1).fill(0);
+            results.forEach(days => data[days - minDays]++);
+            
+            const labels = Array.from({length: maxDays - minDays + 1}, (_, i) => i + minDays);
+            const chartData = data.map(count => count / simulations * 100);
+
+            // Debug output
+            const debugOutput = document.getElementById('debugOutput');
+            debugOutput.innerHTML = `
+                <h3>Debug Information:</h3>
+                <p>Min days: ${minDays}</p>
+                <p>Max days: ${maxDays}</p>
+                <p>Labels: ${labels.join(', ')}</p>
+                <p>Data: ${chartData.map(v => v.toFixed(2)).join(', ')}</p>
+            `;
+
+            new Chart(document.getElementById('chart'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Completion Probability',
+                        data: chartData,
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Probability (%)'
+                            },
+                            max: 100
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Business Days to Completion'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Task Burndown Simulation Results'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: (tooltipItems) => {
+                                    return `${tooltipItems[0].label} business days`;
+                                },
+                                label: (context) => {
+                                    return `Probability: ${context.formattedValue}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
