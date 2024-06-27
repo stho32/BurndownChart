@@ -4,23 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Burndown Simulator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        textarea, input { width: 100%; margin-bottom: 10px; }
-        #chart, #progressBar, #debugOutput { margin-top: 20px; }
-        #progressBar { width: 100%; }
+        #progressBar { height: 30px; }
         #debugOutput { background-color: #f0f0f0; padding: 10px; border-radius: 5px; }
     </style>
 </head>
 <body>
-    <h1>Task Burndown Simulator</h1>
-    <textarea id="csvData" rows="5" placeholder="Enter CSV data for task burndown">-1,0,-1,-2,1,0,-1</textarea>
-    <input type="number" id="remainingTasks" placeholder="Remaining tasks" value="4">
-    <button onclick="startSimulation()">Calculate</button>
-    <progress id="progressBar" value="0" max="100"></progress>
-    <div id="debugOutput"></div>
-    <canvas id="chart"></canvas>
+    <div class="container mt-5">
+        <h1 class="mb-4">Task Burndown Simulator</h1>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="csvData" class="form-label">Daily task changes (comma-separated):</label>
+                <textarea id="csvData" class="form-control" rows="5" placeholder="Enter CSV data for task burndown">-1,0,-1,-2,1,0,-1</textarea>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="remainingTasks" class="form-label">Initial remaining tasks:</label>
+                <input type="number" id="remainingTasks" class="form-control" placeholder="Remaining tasks" value="4">
+            </div>
+        </div>
+        <button onclick="startSimulation()" class="btn btn-primary mb-3">Calculate</button>
+        <div class="progress mb-3">
+            <div id="progressBar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <div id="debugOutput" class="mb-3"></div>
+        <h2 class="mb-4">Simulation Results</h2>
+        <canvas id="probabilityChart" class="mb-5"></canvas>
+        <div id="exampleSimulationSection" style="display: none;">
+            <h2 class="mb-4">Example Simulation</h2>
+            <canvas id="exampleChart" class="mb-4"></canvas>
+            <table id="exampleTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Change</th>
+                        <th>Remaining Tasks</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
 
     <script>
         const MAX_DAYS = 1000; // Maximum number of business days to simulate
@@ -32,28 +57,40 @@
             const results = [];
             const simulations = 1000;
             let currentSimulation = 0;
+            let exampleSimulation = null;
 
             function runSimulationStep() {
                 if (currentSimulation < simulations) {
                     let tasks = remainingTasks;
                     let days = 0;
+                    let simulationData = [];
                     while (tasks > 0 && days < MAX_DAYS) {
                         const randomIndex = Math.floor(Math.random() * csvData.length);
-                        tasks += csvData[randomIndex];
+                        const change = csvData[randomIndex];
+                        tasks += change;
                         tasks = Math.max(0, tasks);
+                        simulationData.push({ day: days + 1, change: change, remainingTasks: tasks });
                         days++;
                     }
-                    if (days < MAX_DAYS) results.push(days);
+                    if (days < MAX_DAYS) {
+                        results.push(days);
+                        if (!exampleSimulation) exampleSimulation = simulationData;
+                    }
                     currentSimulation++;
 
                     // Update progress bar
-                    document.getElementById('progressBar').value = (currentSimulation / simulations) * 100;
+                    const progressBar = document.getElementById('progressBar');
+                    const progress = (currentSimulation / simulations) * 100;
+                    progressBar.style.width = `${progress}%`;
+                    progressBar.setAttribute('aria-valuenow', progress);
 
                     // Schedule next simulation step
                     setTimeout(runSimulationStep, 0);
                 } else {
-                    // All simulations complete, render chart
-                    renderChart(results, simulations);
+                    // All simulations complete, render charts
+                    renderProbabilityChart(results, simulations);
+                    renderExampleChart(exampleSimulation);
+                    document.getElementById('exampleSimulationSection').style.display = 'block';
                 }
             }
 
@@ -61,7 +98,7 @@
             runSimulationStep();
         }
 
-        function renderChart(results, simulations) {
+        function renderProbabilityChart(results, simulations) {
             results.sort((a, b) => a - b);
             const minDays = results[0];
             const maxDays = results[results.length - 1];
@@ -78,18 +115,7 @@
                 return acc;
             }, []);
 
-            // Debug output
-            const debugOutput = document.getElementById('debugOutput');
-            debugOutput.innerHTML = `
-                <h3>Debug Information:</h3>
-                <p>Min days: ${minDays}</p>
-                <p>Max days: ${maxDays}</p>
-                <p>Labels: ${labels.join(', ')}</p>
-                <p>Data: ${chartData.map(v => v.toFixed(2)).join(', ')}</p>
-                <p>Accumulated Data: ${accumulatedData.map(v => v.toFixed(2)).join(', ')}</p>
-            `;
-
-            new Chart(document.getElementById('chart'), {
+            new Chart(document.getElementById('probabilityChart'), {
                 type: 'bar',
                 data: {
                     labels: labels,
@@ -147,6 +173,62 @@
                         }
                     }
                 }
+            });
+        }
+
+        function renderExampleChart(exampleSimulation) {
+            const labels = exampleSimulation.map(data => `Day ${data.day}`);
+            const remainingTasks = exampleSimulation.map(data => data.remainingTasks);
+
+            new Chart(document.getElementById('exampleChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Remaining Tasks',
+                        data: remainingTasks,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Remaining Tasks'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Days'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const day = context.dataIndex + 1;
+                                    const change = exampleSimulation[context.dataIndex].change;
+                                    const remainingTasks = context.raw;
+                                    return `Day ${day}: ${change} (Remaining: ${remainingTasks})`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Populate the table
+            const tableBody = document.getElementById('exampleTable').getElementsByTagName('tbody')[0];
+            exampleSimulation.forEach(data => {
+                const row = tableBody.insertRow();
+                row.insertCell(0).textContent = data.day;
+                row.insertCell(1).textContent = data.change;
+                row.insertCell(2).textContent = data.remainingTasks;
             });
         }
     </script>
