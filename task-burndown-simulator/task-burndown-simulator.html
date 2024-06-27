@@ -71,6 +71,12 @@
             
             const labels = Array.from({length: maxDays - minDays + 1}, (_, i) => i + minDays);
             const chartData = data.map(count => count / simulations * 100);
+            
+            // Calculate accumulated probabilities
+            const accumulatedData = chartData.reduce((acc, value) => {
+                acc.push((acc.length > 0 ? acc[acc.length - 1] : 0) + value);
+                return acc;
+            }, []);
 
             // Debug output
             const debugOutput = document.getElementById('debugOutput');
@@ -80,17 +86,30 @@
                 <p>Max days: ${maxDays}</p>
                 <p>Labels: ${labels.join(', ')}</p>
                 <p>Data: ${chartData.map(v => v.toFixed(2)).join(', ')}</p>
+                <p>Accumulated Data: ${accumulatedData.map(v => v.toFixed(2)).join(', ')}</p>
             `;
 
             new Chart(document.getElementById('chart'), {
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'Completion Probability',
-                        data: chartData,
-                        backgroundColor: 'rgba(75, 192, 192, 0.6)'
-                    }]
+                    datasets: [
+                        {
+                            label: 'Completion Probability',
+                            data: chartData,
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                            order: 2
+                        },
+                        {
+                            label: 'Accumulated Probability',
+                            data: accumulatedData,
+                            type: 'line',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 2,
+                            fill: false,
+                            order: 1
+                        }
+                    ]
                 },
                 options: {
                     scales: {
@@ -120,7 +139,9 @@
                                     return `${tooltipItems[0].label} business days`;
                                 },
                                 label: (context) => {
-                                    return `Probability: ${context.formattedValue}%`;
+                                    const datasetLabel = context.dataset.label || '';
+                                    const value = context.parsed.y;
+                                    return `${datasetLabel}: ${value.toFixed(2)}%`;
                                 }
                             }
                         }
