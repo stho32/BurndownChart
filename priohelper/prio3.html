@@ -160,9 +160,6 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <button type="button" class="btn btn-primary mt-3" onclick="updatePriorityAndChart()">Berechnen</button>
-            </div>
         </form>
     </div>
 
@@ -203,8 +200,16 @@
             document.getElementById('priorityDisplay').textContent = prio.toFixed(2);
 
             // Update chart
+            updateChart(nutzungen, mitarbeiter, extern, workaround, ersparnis, zielpunkte, entscheider, risiko);
+
+            // Update URL
+            updateURL();
+        }
+
+        function updateChart(nutzungen, mitarbeiter, extern, workaround, ersparnis, zielpunkte, entscheider, risiko) {
+            const data = [nutzungen, mitarbeiter, extern, workaround, ersparnis, zielpunkte, entscheider, risiko];
             if (prioChart) {
-                prioChart.data.datasets[0].data = [nutzungen, mitarbeiter, extern, workaround, ersparnis, zielpunkte, entscheider, risiko];
+                prioChart.data.datasets[0].data = data;
                 prioChart.update();
             } else {
                 prioChart = new Chart(ctx, {
@@ -213,7 +218,7 @@
                         labels: ['Nutzungen', 'Mitarbeiter', 'Extern', 'Workaround', 'Ersparnis', 'Ziele', 'Entscheider', 'Risiko'],
                         datasets: [{
                             label: 'Priorität',
-                            data: [nutzungen, mitarbeiter, extern, workaround, ersparnis, zielpunkte, entscheider, risiko],
+                            data: data,
                             fill: true,
                             backgroundColor: 'rgba(75, 192, 192, 0.2)',
                             borderColor: 'rgba(75, 192, 192, 1)',
@@ -236,8 +241,9 @@
                     }
                 });
             }
+        }
 
-            // Update URL
+        function updateURL() {
             const form = document.getElementById('prioForm');
             const formData = new FormData(form);
             const searchParams = new URLSearchParams(formData);
@@ -245,13 +251,37 @@
             window.history.pushState({}, '', newUrl);
         }
 
+        function setInitialValues() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Set select inputs
+            ['nutzungen', 'mitarbeiter', 'extern', 'workaround', 'ersparnis', 'entscheider', 'risiko'].forEach(param => {
+                const value = urlParams.get(param);
+                if (value) {
+                    document.getElementById(param).value = value;
+                }
+            });
+
+            // Set checkboxes
+            const ziele = urlParams.getAll('ziel[]');
+            ziele.forEach(ziel => {
+                const checkbox = document.getElementById(`ziel${ziel}`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            });
+
+            // Update priority and chart after setting initial values
+            updatePriorityAndChart();
+        }
+
+        // Call setInitialValues when the page loads
+        document.addEventListener('DOMContentLoaded', setInitialValues);
+
         // Automated priority and chart update on change
         document.querySelectorAll('select, input[type="checkbox"]').forEach(element => {
             element.addEventListener('change', updatePriorityAndChart);
         });
-
-        // Initial priority and chart update
-        updatePriorityAndChart();
     </script>
 </body>
 </html>
