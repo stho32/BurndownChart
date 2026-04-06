@@ -6,6 +6,7 @@
 		calculateDimensionAverages,
 		generateDocumentationHtml,
 		generateProjectSummaryHtml,
+		documentation,
 		type ProjectConfig
 	} from '$lib/utils/pppchartData';
 
@@ -135,8 +136,7 @@
 	}
 
 	async function copyDocumentation() {
-		const { documentation: doc } = await import('$lib/utils/pppchartData');
-		const langDoc = doc[docLanguage];
+		const langDoc = documentation[docLanguage];
 		let text = 'Project Quality Documentation\n\n';
 
 		text += 'Variables:\n';
