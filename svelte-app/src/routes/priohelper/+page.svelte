@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { calculatePriority } from '$lib/utils/prioCalculator';
 	import { base } from '$app/paths';
-	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import Chart from 'chart.js/auto';
 
 	let nutzungen = $state(1);
@@ -58,24 +57,6 @@
 		risiko
 	]);
 
-	// Read URL params on mount
-	function initFromUrl() {
-		const params = page.url.searchParams;
-		if (params.has('nutzungen')) nutzungen = parseInt(params.get('nutzungen')!) || 1;
-		if (params.has('mitarbeiter')) mitarbeiter = parseInt(params.get('mitarbeiter')!) || 1;
-		if (params.has('extern')) extern_ = parseInt(params.get('extern')!) || 1;
-		if (params.has('workaround')) workaround = parseInt(params.get('workaround')!) || 1;
-		if (params.has('ersparnis')) ersparnis = parseInt(params.get('ersparnis')!) || 1;
-		if (params.has('entscheider')) entscheider = parseInt(params.get('entscheider')!) || 1;
-		if (params.has('risiko')) risiko = parseInt(params.get('risiko')!) || 1;
-
-		const ziele = params.getAll('ziel[]');
-		ziel1 = ziele.includes('1');
-		ziel2 = ziele.includes('2');
-		ziel3 = ziele.includes('3');
-		ziel4 = ziele.includes('4');
-	}
-
 	function updateUrl() {
 		const params = new URLSearchParams();
 		params.set('nutzungen', String(nutzungen));
@@ -90,9 +71,26 @@
 		if (ziel3) params.append('ziel[]', '3');
 		if (ziel4) params.append('ziel[]', '4');
 
-		const newUrl = `${page.url.pathname}?${params.toString()}`;
-		goto(newUrl, { replaceState: true, keepFocus: true, noScroll: true });
+		const newUrl = `${window.location.pathname}?${params.toString()}`;
+		window.history.replaceState({}, '', newUrl);
 	}
+
+	onMount(() => {
+		const params = new URLSearchParams(window.location.search);
+		if (params.has('nutzungen')) nutzungen = parseInt(params.get('nutzungen')!) || 1;
+		if (params.has('mitarbeiter')) mitarbeiter = parseInt(params.get('mitarbeiter')!) || 1;
+		if (params.has('extern')) extern_ = parseInt(params.get('extern')!) || 1;
+		if (params.has('workaround')) workaround = parseInt(params.get('workaround')!) || 1;
+		if (params.has('ersparnis')) ersparnis = parseInt(params.get('ersparnis')!) || 1;
+		if (params.has('entscheider')) entscheider = parseInt(params.get('entscheider')!) || 1;
+		if (params.has('risiko')) risiko = parseInt(params.get('risiko')!) || 1;
+
+		const ziele = params.getAll('ziel[]');
+		ziel1 = ziele.includes('1');
+		ziel2 = ziele.includes('2');
+		ziel3 = ziele.includes('3');
+		ziel4 = ziele.includes('4');
+	});
 
 	function createOrUpdateChart() {
 		if (!canvasEl) return;
@@ -141,10 +139,6 @@
 	}
 
 	$effect(() => {
-		initFromUrl();
-	});
-
-	$effect(() => {
 		// Access chartData to track it
 		chartData;
 		createOrUpdateChart();
@@ -152,7 +146,6 @@
 
 	$effect(() => {
 		// Update URL whenever any value changes
-		// Access all reactive values to establish dependencies
 		nutzungen;
 		mitarbeiter;
 		extern_;
@@ -164,7 +157,8 @@
 		ziel2;
 		ziel3;
 		ziel4;
-		updateUrl();
+		// Only update URL on client side, skip SSR
+		if (typeof window !== 'undefined') updateUrl();
 	});
 </script>
 

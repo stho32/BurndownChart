@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { calculateEntwicklungsbedarf } from '$lib/utils/entwicklungsbedarfCalculator';
 	import { base } from '$app/paths';
-	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import Chart from 'chart.js/auto';
 
 	let effizienzsteigerung = $state(0);
@@ -28,8 +27,22 @@
 		})
 	);
 
-	function initFromUrl() {
-		const params = page.url.searchParams;
+	function updateUrl() {
+		const params = new URLSearchParams();
+		params.set('effizienzsteigerung', String(effizienzsteigerung));
+		params.set('benutzerfreundlichkeit', String(benutzerfreundlichkeit));
+		params.set('performance', String(performance_));
+		params.set('fehlerhaeufigkeit', String(fehlerhaeufigkeit));
+		params.set('fehleraufwand', String(fehleraufwand));
+		params.set('deadEnd', String(deadEnd));
+		params.set('verdientesGeld', String(verdientesGeld));
+
+		const newUrl = `${window.location.pathname}?${params.toString()}`;
+		window.history.replaceState({}, '', newUrl);
+	}
+
+	onMount(() => {
+		const params = new URLSearchParams(window.location.search);
 		if (params.has('effizienzsteigerung'))
 			effizienzsteigerung = parseInt(params.get('effizienzsteigerung')!) || 0;
 		if (params.has('benutzerfreundlichkeit'))
@@ -43,21 +56,7 @@
 		if (params.has('deadEnd')) deadEnd = parseInt(params.get('deadEnd')!) || 1;
 		if (params.has('verdientesGeld'))
 			verdientesGeld = parseInt(params.get('verdientesGeld')!) || 1;
-	}
-
-	function updateUrl() {
-		const params = new URLSearchParams();
-		params.set('effizienzsteigerung', String(effizienzsteigerung));
-		params.set('benutzerfreundlichkeit', String(benutzerfreundlichkeit));
-		params.set('performance', String(performance_));
-		params.set('fehlerhaeufigkeit', String(fehlerhaeufigkeit));
-		params.set('fehleraufwand', String(fehleraufwand));
-		params.set('deadEnd', String(deadEnd));
-		params.set('verdientesGeld', String(verdientesGeld));
-
-		const newUrl = `${page.url.pathname}?${params.toString()}`;
-		goto(newUrl, { replaceState: true, keepFocus: true, noScroll: true });
-	}
+	});
 
 	function createOrUpdateChart() {
 		if (!canvasEl) return;
@@ -106,10 +105,6 @@
 	}
 
 	$effect(() => {
-		initFromUrl();
-	});
-
-	$effect(() => {
 		result.factors;
 		createOrUpdateChart();
 	});
@@ -122,7 +117,7 @@
 		fehleraufwand;
 		deadEnd;
 		verdientesGeld;
-		updateUrl();
+		if (typeof window !== 'undefined') updateUrl();
 	});
 </script>
 
