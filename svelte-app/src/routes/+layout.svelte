@@ -8,7 +8,12 @@
 	const navItems = [
 		{ href: `${base}/`, label: 'Home' },
 		{ href: `${base}/experiment1/`, label: 'Experiment 1' },
-		{ href: `${base}/experiment2/`, label: 'Experiment 2' }
+		{ href: `${base}/experiment2/`, label: 'Experiment 2' },
+		{ href: `${base}/experiment3/`, label: 'Experiment 3' },
+		{ href: `${base}/source-code-quality/`, label: 'Source Code Quality' },
+		{ href: `${base}/task-burndown-simulator/`, label: 'Simulator' },
+		{ href: `${base}/pppchart/`, label: 'Project Quality' },
+		{ href: `${base}/priohelper/`, label: 'Priohelper' }
 	];
 
 	let menuOpen = $state(false);

@@ -14,6 +14,26 @@
 		<h2>Experiment 2</h2>
 		<p>Monthly Burndown Chart with Chart.js, task tracking and linear regression trendline.</p>
 	</a>
+	<a href="{base}/experiment3/" class="card">
+		<h2>Experiment 3</h2>
+		<p>Burndown Chart Generator with text-based input, annotation support and daily throughput table.</p>
+	</a>
+	<a href="{base}/source-code-quality/" class="card">
+		<h2>Source Code Quality</h2>
+		<p>Radar chart for visualizing source code quality across 6 dimensions with 18 data points per component.</p>
+	</a>
+	<a href="{base}/task-burndown-simulator/" class="card">
+		<h2>Task Burndown Simulator</h2>
+		<p>Monte Carlo simulation for task completion forecasting with probability distribution charts.</p>
+	</a>
+	<a href="{base}/pppchart/" class="card">
+		<h2>Project Quality</h2>
+		<p>People/Product/Process radar chart for assessing project quality with bilingual documentation.</p>
+	</a>
+	<a href="{base}/priohelper/" class="card">
+		<h2>Priohelper</h2>
+		<p>Priorisierungshelfer und Entwicklungsbedarf-Helper mit Radar-Charts und URL-State.</p>
+	</a>
 </div>
 
 <style>
