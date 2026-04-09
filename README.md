@@ -1,22 +1,42 @@
 # BurndownChart
-A burndown chart for your project data with forecasting and annotations
 
-Github page url: https://stho32.github.io/BurndownChart/
+A burndown chart for your project data with forecasting and annotations.
 
-## Contained Charts
+GitHub Pages: https://stho32.github.io/BurndownChart/
 
-- [Source Code Quality Chart](https://stho32.github.io/BurndownChart/source-code-quality/index.html)
-- [Project Quality Chart](https://stho32.github.io/BurndownChart/pppchart/index.html)
-- [Burndown Chart (Experiment 1)](https://stho32.github.io/BurndownChart/experiment1/index.html)
-- [Burndown Chart (Experiment 2)](https://stho32.github.io/BurndownChart/experiment2/index.html)
-- [Burndown Chart (Experiment 3)](https://stho32.github.io/BurndownChart/experiment3/index.html)
-- [Task Burndown Simulator](https://stho32.github.io/BurndownChart/task-burndown-simulator/task-burndown-simulator.html)
+## Svelte-Migration
 
-## Prio Helper
+Alle Apps wurden von reinem HTML/JS nach **SvelteKit** migriert. Die Svelte-App befindet sich im Verzeichnis `svelte-app/`.
 
-The Prio Helper is a tool to assist in prioritizing tasks or projects. It serves as an example of linear prioritization.
+### Setup
 
-- [Prio Helper (Example of linear prioritization)](https://stho32.github.io/BurndownChart/priohelper/prio3.html)
-- [Prio Helper Test Links](https://stho32.github.io/BurndownChart/priohelper/test_prio.html)
+```bash
+cd svelte-app
+npm install
+npm run dev
+```
 
-The Prio Helper allows you to input various factors and calculates a priority score using a linear approach. The test page provides different parameter combinations to test the Prio Helper's functionality.
+### Build und Deploy
+
+```bash
+cd svelte-app
+npm run build
+```
+
+Der statische Build wird im Verzeichnis `svelte-app/build/` erzeugt und ist kompatibel mit GitHub Pages.
+
+## Enthaltene Apps
+
+| App | Beschreibung | Route |
+|---|---|---|
+| Burndown Chart (Experiment 1) | Einfaches Burndown-Chart | `/experiment1` |
+| Burndown Chart (Experiment 2) | Chart.js Burndown mit Trendlinie | `/experiment2` |
+| Burndown Chart (Experiment 3) | Erweitertes Burndown-Chart | `/experiment3` |
+| Project Quality Chart | Projektqualitaets-Visualisierung | `/pppchart` |
+| Source Code Quality Chart | Code-Qualitaets-Tracking | `/source-code-quality` |
+| Prio Helper | Lineare Priorisierung von Aufgaben | `/priohelper` |
+| Task Burndown Simulator | Simulation von Task-Burndowns | `/task-burndown-simulator` |
+
+## Legacy-Verzeichnisse
+
+Die urspruenglichen HTML/JS-Implementierungen befinden sich weiterhin in den Verzeichnissen `experiment1/`, `experiment2/`, `experiment3/`, `pppchart/`, `priohelper/`, `source-code-quality/` und `task-burndown-simulator/`. Sie werden durch die Svelte-App ersetzt.
